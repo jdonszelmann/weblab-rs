@@ -1,0 +1,5 @@
+
+[workspace]
+members = ["weblab-macros", "example-project", "weblab", "weblab-assignment-structure"]
+default-members = ["weblab-macros", "example-project", "weblab", "weblab-assignment-structure"]
+

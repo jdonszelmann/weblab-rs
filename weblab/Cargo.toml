@@ -1,0 +1,11 @@
+[package]
+name = "weblab"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+weblab-macros = {path="../weblab-macros"}
+weblab-assignment-structure = {path="../weblab-assignment-structure"}
+paste = "1.0.6"
