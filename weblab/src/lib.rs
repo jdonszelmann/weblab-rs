@@ -1,4 +1,4 @@
-pub use paste::paste;
+///! for library docs, refer to [https://github.com/jonay2000/weblab-rs](https://github.com/jonay2000/weblab-rs)
 pub use weblab_assignment_structure::*;
 pub use weblab_macros::*;
 
@@ -27,12 +27,10 @@ macro_rules! weblab_folder {
                 assignments: &[
                     $(
                         {
-                            $crate::paste!{
-                                use super::*;
-                                use $module as weblab_module;
+                            use super::*;
+                            use $module as weblab_module;
 
-                                weblab_module::__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO
-                            }
+                            weblab_module::__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO
                         }
                     ),*
                 ],

@@ -8,4 +8,3 @@ edition = "2021"
 [dependencies]
 weblab-macros = {path="../weblab-macros"}
 weblab-assignment-structure = {path="../weblab-assignment-structure"}
-paste = "1.0.6"
