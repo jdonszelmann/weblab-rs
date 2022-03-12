@@ -49,7 +49,7 @@ name = "weblab"
 version = "0.1.0"
 dependencies = [
  "weblab-assignment-structure 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "weblab-macros 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "weblab-macros 0.1.0",
 ]
 
 [[package]]
@@ -65,6 +65,8 @@ checksum = "fe322963b1b59b3188d3cfe81d35bed23c0b09a9bba1312631f66c5d2798c4c1"
 [[package]]
 name = "weblab-macros"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0479f2cb97b849ebb200fe6cef18f2fe0d2870c5751c661204acceed60928304"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -73,9 +75,7 @@ dependencies = [
 
 [[package]]
 name = "weblab-macros"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0479f2cb97b849ebb200fe6cef18f2fe0d2870c5751c661204acceed60928304"
+version = "0.1.1"
 dependencies = [
  "proc-macro2",
  "quote",

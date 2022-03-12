@@ -140,6 +140,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
             });
         }
 
+        #[allow(unused_imports)]
         #res
     }.into()
 }
