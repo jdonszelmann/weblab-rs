@@ -2,6 +2,10 @@
 name = "weblab-assignment-structure"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+authors = ["Jonathan Dönszelmann <jonabent@gmail.com>"]
+description = "structs and enums describing a weblab assignment"
+homepage = "https://github.com/jonay2000/weblab-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

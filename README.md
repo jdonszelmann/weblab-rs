@@ -4,7 +4,6 @@
 [![Crates.io](https://img.shields.io/crates/v/weblab?logo=rust&style=for-the-badge)](https://crates.io/crates/weblab)
 [![Github Workflows](https://img.shields.io/github/workflow/status/jonay2000/weblab-rs/label?logo=github&style=for-the-badge)](https://github.com/jonay2000/weblab-rs/actions/workflows/ci.yml)
 
-Generate [Weblab](https://weblab.tudelft.nl) assignments from rust code. Works as a rust library.
 
 ## Installation
 

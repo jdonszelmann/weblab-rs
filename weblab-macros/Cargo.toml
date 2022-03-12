@@ -2,6 +2,10 @@
 name = "weblab-macros"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+authors = ["Jonathan Dönszelmann <jonabent@gmail.com>"]
+description = "proc macros to generate weblab assignments"
+homepage = "https://github.com/jonay2000/weblab-rs"
 
 [lib]
 proc-macro = true
