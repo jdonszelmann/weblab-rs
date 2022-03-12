@@ -10,5 +10,7 @@ homepage = "https://github.com/jonay2000/weblab-rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-weblab-macros = {path="../weblab-macros"}
-weblab-assignment-structure = {path="../weblab-assignment-structure"}
+weblab-macros = "0.1.0"
+weblab-assignment-structure = "0.1.0"
+#weblab-macros = {path="../weblab-macros"}
+#weblab-assignment-structure = {path="../weblab-assignment-structure"}

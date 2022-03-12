@@ -48,13 +48,19 @@ checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
 name = "weblab"
 version = "0.1.0"
 dependencies = [
- "weblab-assignment-structure",
+ "weblab-assignment-structure 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "weblab-macros",
 ]
 
 [[package]]
 name = "weblab-assignment-structure"
 version = "0.1.0"
+
+[[package]]
+name = "weblab-assignment-structure"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe322963b1b59b3188d3cfe81d35bed23c0b09a9bba1312631f66c5d2798c4c1"
 
 [[package]]
 name = "weblab-macros"
