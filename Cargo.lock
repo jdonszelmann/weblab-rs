@@ -570,10 +570,10 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
 name = "weblab"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "weblab-assignment-structure 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "weblab-macros 0.1.1",
+ "weblab-macros 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -601,17 +601,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
-]
-
-[[package]]
-name = "weblab-macros"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2138362adb664388f92227408ffa31a72461a46eb74e5399aad643f31275844"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
+ "weblab-runtime-tools 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -624,8 +614,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "weblab-macros"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8141bcc8e69e608794a8282d6813f54311606ef0840d49adbf7f98e624c6d5a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "weblab-runtime-tools"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "xml",
+]
+
+[[package]]
+name = "weblab-runtime-tools"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "526bccbfaa0cbae2979d681b5330094c3ee02233cae49463ba37174fa09b10cd"
 dependencies = [
  "serde",
  "xml",
