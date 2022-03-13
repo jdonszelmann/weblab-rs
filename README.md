@@ -21,6 +21,8 @@ use weblab::weblab;
 
 #[weblab(programming_assignment)]
 /// This is an example assignment. This text will become the assignment text.
+/// Note that the text in this comment starts with *three* slashes. That makes
+/// it a special "doc comment".
 /// # You can use markdown here. Most editors (like clion) even shows it.
 /// The markdown will also show on weblab.
 ///
@@ -115,6 +117,8 @@ fn main() {
 }
 ```
 
+## assignment generation
+
 This adds a command line interface to your project, which you
 can now use to interact with the generation code. The following
 commands are some of what's available:
@@ -131,3 +135,36 @@ cargo run -- --help
 # always available, simply runs the spectests
 cargo test
 ```
+
+## Folders
+
+To generate weblab folders, you can use the `weblab_folder` macro
+
+```
+
+weblab_folder! {
+    "test", // always a name first. Can be any string
+
+    // then some module names in which the assignment can be found
+    // note that the modules refer to the enclosing sope, in which
+    // the label #[weblab(programming_assignment)] is put. Not the
+    // module the annotation is put on. So the module `assignment`
+    // contains something like this:
+    // ```
+    // #[weblab(programming_assignment)]
+    // mod assignment {
+    //  ... // contents
+    // }
+    // ```
+    assignment, 
+    assignment2,
+}
+
+```
+
+## Open questions
+
+
+## Examples
+
+For an example module layout, look in [example-project](https://github.com/jonay2000/weblab-rs/tree/main/example-project)

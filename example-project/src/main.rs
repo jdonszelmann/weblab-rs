@@ -1,4 +1,4 @@
-use weblab::weblab_folder;
+use weblab::{weblab_folder, weblab};
 
 mod a;
 mod b;
@@ -11,4 +11,5 @@ weblab_folder! {
     // b,
 }
 
+#[weblab(main)]
 fn main() {}

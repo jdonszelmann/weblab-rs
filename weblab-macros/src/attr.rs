@@ -29,6 +29,8 @@ pub enum Attr {
     TestTemplate,
     Library,
 
+    Main,
+
     Title(String),
     Doc(String),
 }
@@ -58,6 +60,7 @@ impl TryFrom<Meta> for Attr {
                 if let Some(i) = path.get_ident() {
                     match i.to_string().as_str() {
                         "programming_assignment" => return Ok(Self::ProgrammingAssignment),
+                        "main" => return Ok(Self::Main),
                         "solution" => return Ok(Self::Solution),
                         "solution_template" => return Ok(Self::SolutionTemplate),
                         "test" => return Ok(Self::Test),
@@ -108,7 +111,7 @@ impl TryFrom<Meta> for Attr {
 
         Err(ToAttrError::Message(
             "expected one of 'programming_assignment', 'solution', 'solution_template', 'test', \
-            'test_template', 'library', 'title=\"...\"' or 'description=\"...\"'"
+            'test_template', 'library', 'main', 'title=\"...\"' or 'description=\"...\"'"
                 .to_string(),
         ))
     }

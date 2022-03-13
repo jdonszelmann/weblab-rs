@@ -2,6 +2,8 @@
 pub use weblab_assignment_structure::*;
 pub use weblab_macros::*;
 
+pub mod cli;
+
 #[macro_export]
 macro_rules! solution_only {
     ($($tt: tt)*) => {

@@ -7,11 +7,7 @@ use std::mem;
 use syn::__private::TokenStream2;
 use syn::fold::{fold_item, Fold};
 use syn::spanned::Spanned;
-use syn::{
-    Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro,
-    ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion,
-    ItemUse,
-};
+use syn::{Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro, ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion, ItemUse, parse_macro_input};
 
 mod attr;
 
@@ -380,10 +376,27 @@ pub fn weblab(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let res = if let Some(Attr::ProgrammingAssignment) = attr.first() {
         process_programming_assignment(&attr[1..], item)
+    } else if let Some(Attr::Main) = attr.first() {
+        let func = parse_macro_input!(item as ItemFn);
+        if func.sig.ident != "main" {
+            return syn::Error::new(
+                Span::call_site().into(),
+                "#[weblab(main)] can only be put on the main function"
+            )
+                .to_compile_error()
+                .into();
+        }
+
+        "
+        fn main() {
+            weblab::cli::main()
+        }
+        ".parse().unwrap()
     } else {
         return syn::Error::new(
             Span::call_site().into(),
-            "#[weblab(programming_assignment)] always needs to be the first attribute \
+            "Expected #[weblab(main)] or #[weblab(programming_assignment)]. \
+            note that #[weblab(programming_assignment)] always needs to be the first attribute \
             on a module containing the solution, test and library. Other attributes, \
             #[weblab(...)] attributes and doc comments need to be below it or inside the \
             module that's annotated with #[weblab(programming_assignment)]",
