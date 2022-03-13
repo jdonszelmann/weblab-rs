@@ -1,14 +1,14 @@
 [package]
-name = "weblab-assignment-structure"
+name = "weblab-runtime-tools"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
 authors = ["Jonathan Dönszelmann <jonabent@gmail.com>"]
-description = "structs and enums describing a weblab assignment"
+description = "Runtime helpers for weblab. Generates xml output in weblab containers"
 homepage = "https://github.com/jonay2000/weblab-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
-
+xml = "0.0.1"
+serde = {version="1.0.136", features=["derive"]}

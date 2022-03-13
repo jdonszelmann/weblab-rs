@@ -8,6 +8,8 @@
       <sourceFolder url="file://$MODULE_DIR$/weblab-macros/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/weblab/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/example-project/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/weblab-docker/user_code/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/weblab-runtime-tools/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
