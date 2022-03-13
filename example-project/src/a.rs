@@ -4,7 +4,7 @@ use weblab::weblab;
 /// This is an example assignment.
 /// # You can use markdown here. Most editors (like clion) even shows it.
 /// The markdown will also show on weblab-macros.
-#[weblab(title = "test")] // otherwise the module name is used
+#[weblab(title = "test_1")] // otherwise the module name is used
 mod assignment {
     #[weblab(solution)]
     mod solution {

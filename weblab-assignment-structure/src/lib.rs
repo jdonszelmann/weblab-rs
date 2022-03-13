@@ -23,6 +23,8 @@ pub struct Checklist {
 }
 
 pub struct OpenQuestion {
+    pub title: &'static str,
+
     pub question: &'static str,
 
     pub expected_answer: &'static str,
@@ -30,6 +32,8 @@ pub struct OpenQuestion {
 }
 
 pub struct MCQuestion {
+    pub title: &'static str,
+
     pub options: Vec<&'static str>,
     pub answer: usize,
 }
@@ -39,6 +43,17 @@ pub enum WeblabAssignment {
     Open(OpenQuestion),
     MultipleChoice(MCQuestion),
     Folder(WeblabFolder),
+}
+
+impl WeblabAssignment {
+    pub fn title(&self) -> &str {
+        match self {
+            WeblabAssignment::Programming(ProgrammingAssignment { title, .. }) => title,
+            WeblabAssignment::Open(OpenQuestion { title, .. }) => title,
+            WeblabAssignment::MultipleChoice(MCQuestion { title, .. }) => title,
+            WeblabAssignment::Folder(WeblabFolder { title, .. }) => title,
+        }
+    }
 }
 
 pub struct WeblabFolder {

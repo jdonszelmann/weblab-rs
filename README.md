@@ -110,10 +110,17 @@ To generate weblab assignments (in uploadable zip form) from this structure
 from this, make the root of the project a `main.rs` file similar to this:
 
 ```rust
-#[weblab(main)]
-fn main() { 
-    // the main function will be automatically populated
-    // with a nice CLI. Code you put in here will be ignored.  
+use weblab::weblab_main;
+
+weblab_folder! {
+    // assignments
+    ...
+}
+
+fn main() {
+    // weblab_main takes one parameter, which is the root of the project. 
+    // usually this module contains a weblab_folder!{} invocation. 
+    weblab_main!(self);
 }
 ```
 
@@ -125,9 +132,10 @@ commands are some of what's available:
 ```bash
 cargo run -- generate folder
 cargo run -- generate zip
-cargo run -- generate zip --name='some_assignment'
+cargo run -- generate zip output.zip
+cargo run -- generate zip output.zip --name='some_assignment'
 cargo run -- generate folder --name='some_assigment'
-cargo run -- generate folder --module='some::path::to::an::assignment'
+cargo run -- generate folder output --module='some::path::to::an::assignment'
 
 # for all commands
 cargo run -- --help 
@@ -140,7 +148,8 @@ cargo test
 
 To generate weblab folders, you can use the `weblab_folder` macro
 
-```
+```rust
+use weblab::weblab_folder;
 
 weblab_folder! {
     "test", // always a name first. Can be any string

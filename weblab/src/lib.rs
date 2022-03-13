@@ -5,6 +5,18 @@ pub use weblab_macros::*;
 pub mod cli;
 
 #[macro_export]
+macro_rules! weblab_main {
+    (self) => {{
+        $crate::cli::main(__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO);
+    }};
+
+    ($root_module: path) => {{
+        use $root_module as weblab_module;
+        $crate::cli::main(weblab_module::__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO);
+    }};
+}
+
+#[macro_export]
 macro_rules! solution_only {
     ($($tt: tt)*) => {
         $($tt)*

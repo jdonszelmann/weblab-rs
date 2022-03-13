@@ -7,7 +7,11 @@ use std::mem;
 use syn::__private::TokenStream2;
 use syn::fold::{fold_item, Fold};
 use syn::spanned::Spanned;
-use syn::{Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro, ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion, ItemUse};
+use syn::{
+    Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro,
+    ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion,
+    ItemUse,
+};
 
 mod attr;
 
@@ -64,7 +68,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
         .into();
     }
 
-    let spectest = if let Some(i) = reference.test().map(|i| i.to_token_stream().to_string()) {
+    let spectest = if let Some(i) = reference.test().map(|i| quote! {#(#i)*}.to_string()) {
         i
     } else {
         return quote! {
@@ -74,24 +78,22 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
     };
     let testtemplate = template
         .test()
-        .map(|i| i.to_token_stream().to_string())
+        .map(|i| quote! {#(#i)*}.to_string())
         .unwrap_or_else(|| "".to_string());
-    let referencesolution = if let Some(i) = reference
-        .solution()
-        .map(|i| i.to_token_stream().to_string())
-    {
-        i
-    } else {
-        return quote! {
-            compile_error!("assignment has no reference solution");
-        }
-        .into();
-    };
+    let referencesolution =
+        if let Some(i) = reference.solution().map(|i| quote! {#(#i)*}.to_string()) {
+            i
+        } else {
+            return quote! {
+                compile_error!("assignment has no reference solution");
+            }
+            .into();
+        };
     let solutiontemplate = template
         .solution()
-        .map(|i| i.to_token_stream().to_string())
+        .map(|i| quote! {#(#i)*}.to_string())
         .unwrap_or_else(|| "".to_string());
-    let library = if let Some(i) = template.library().map(|i| i.to_token_stream().to_string()) {
+    let library = if let Some(i) = template.library().map(|i| quote! {#(#i)*}.to_string()) {
         quote! {
             Some(#i)
         }
@@ -161,31 +163,37 @@ enum FindAnnotated {
 }
 
 impl FindAnnotated {
-    pub fn test(&self) -> Option<&ItemMod> {
+    pub fn test(&self) -> Option<Vec<Item>> {
         match self {
             FindAnnotated::Template { test, .. } => match test {
-                Status::Certain(i) => Some(i),
-                Status::Maybe(i) => Some(i),
+                Status::Certain(i) => i.content.clone().map(|(_, x)| x),
+                Status::Maybe(i) => i.content.clone().map(|(_, x)| x),
                 Status::Unkown => None,
             },
-            FindAnnotated::Reference { test, .. } => test.as_ref(),
+            FindAnnotated::Reference { test, .. } => {
+                test.clone().and_then(|i| i.content).map(|(_, x)| x)
+            }
         }
     }
 
-    pub fn solution(&self) -> Option<&ItemMod> {
+    pub fn solution(&self) -> Option<Vec<Item>> {
         match self {
             FindAnnotated::Template { solution, .. } => match solution {
-                Status::Certain(i) => Some(i),
-                Status::Maybe(i) => Some(i),
+                Status::Certain(i) => i.content.clone().map(|(_, x)| x),
+                Status::Maybe(i) => i.content.clone().map(|(_, x)| x),
                 Status::Unkown => None,
             },
-            FindAnnotated::Reference { solution, .. } => solution.as_ref(),
+            FindAnnotated::Reference { solution, .. } => {
+                solution.clone().and_then(|i| i.content).map(|(_, x)| x)
+            }
         }
     }
 
-    pub fn library(&self) -> Option<&ItemMod> {
+    pub fn library(&self) -> Option<Vec<Item>> {
         match self {
-            FindAnnotated::Template { library, .. } => library.as_ref(),
+            FindAnnotated::Template { library, .. } => {
+                library.clone().and_then(|i| i.content).map(|(_, x)| x)
+            }
             FindAnnotated::Reference { .. } => None,
         }
     }
@@ -376,7 +384,7 @@ pub fn weblab(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let res = if let Some(Attr::ProgrammingAssignment) = attr.first() {
         process_programming_assignment(&attr[1..], item)
-    }  else {
+    } else {
         return syn::Error::new(
             Span::call_site().into(),
             "#[weblab(programming_assignment)] always needs to be the first attribute \

@@ -6,7 +6,7 @@ use weblab::weblab;
 /// The markdown will also show on weblab.
 ///
 /// The assignment here is: return the word "main"!
-#[weblab(title = "test")] // otherwise the module name is used
+#[weblab(title = "test_2")] // otherwise the module name is used
 mod assignment {
     #[weblab(solution)]
     mod solution {

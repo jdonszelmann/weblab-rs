@@ -1,6 +1,6 @@
 [package]
 name = "weblab"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 authors = ["Jonathan Dönszelmann <jonabent@gmail.com>"]
@@ -10,8 +10,15 @@ homepage = "https://github.com/jonay2000/weblab-rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-#weblab-macros = "0.1.2"
-weblab-assignment-structure = "0.1.0"
-clap = "3.1.6"
-weblab-macros = {path="../weblab-macros"}
+#weblab-macros = {path="../weblab-macros"}
 #weblab-assignment-structure = {path="../weblab-assignment-structure"}
+weblab-macros = "0.2.0"
+weblab-assignment-structure = "0.2.0"
+
+serde = {version="1.0.136", features=["derive"]}
+serde_json = "1.0.79"
+clap = {version="3.1.6", features=["derive"]}
+zip = "0.5.13"
+walkdir = "2.3.2"
+pathdiff = "0.2.1"
+sanitize-filename = "0.3.0"
