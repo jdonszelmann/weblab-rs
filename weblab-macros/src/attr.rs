@@ -29,8 +29,6 @@ pub enum Attr {
     TestTemplate,
     Library,
 
-    Main,
-
     Title(String),
     Doc(String),
 }
@@ -60,7 +58,6 @@ impl TryFrom<Meta> for Attr {
                 if let Some(i) = path.get_ident() {
                     match i.to_string().as_str() {
                         "programming_assignment" => return Ok(Self::ProgrammingAssignment),
-                        "main" => return Ok(Self::Main),
                         "solution" => return Ok(Self::Solution),
                         "solution_template" => return Ok(Self::SolutionTemplate),
                         "test" => return Ok(Self::Test),
