@@ -103,7 +103,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
         }
     };
 
-    let description: String = attrs
+    let assignment_text = attrs
         .iter()
         .filter_map(|x| {
             if let Attr::Doc(i) = x {
@@ -112,8 +112,10 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
                 None
             }
         })
+        .map(|i| i.trim())
         .collect::<Vec<_>>()
         .join("\n");
+
 
     quote! {
         pub mod __WEBLAB_ASSIGNMENT_METADATA {
@@ -122,7 +124,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
             pub const ASSIGNMENT_INFO: WeblabAssignment = WeblabAssignment::Programming(ProgrammingAssignment {
                 title: #title,
 
-                description: #description,
+                assignment_text: #assignment_text,
 
                 library_visible: false,
                 spectest_stdout_visible: false,

@@ -4,15 +4,37 @@ pub use weblab_macros::*;
 
 pub mod cli;
 
-#[macro_export]
-macro_rules! weblab_main {
-    (self) => {{
-        $crate::cli::main(__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO);
-    }};
 
+#[macro_export]
+macro_rules! weblab_assignment_info {
+    (self) => {
+        {
+            let w: $crate::WeblabAssignment = __WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO;
+            w
+        }
+    };
     ($root_module: path) => {{
         use $root_module as weblab_module;
-        $crate::cli::main(weblab_module::__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO);
+        let w: $crate::WeblabAssignment = weblab_module::__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO;
+        w
+    }};
+}
+
+#[macro_export]
+macro_rules! weblab_main {
+    (self, $($args: expr),*) => {
+        $crate::cli::main(__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO, &[$($args.to_string()),*]);
+    };
+    (self) => {{
+        $crate::cli::main(__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO, &std::env::args().collect::<Vec<String>>());
+    }};
+    ($root_module: path, $($args: expr),*) => {
+        use $root_module as weblab_module;
+        $crate::cli::main(weblab_module::__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO, &[$($args.to_string()),*]);
+    };
+    ($root_module: path) => {{
+        use $root_module as weblab_module;
+        $crate::cli::main(weblab_module::__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO, &std::env::args().collect::<Vec<String>>());
     }};
 }
 
@@ -38,6 +60,7 @@ macro_rules! weblab_folder {
 
             pub const ASSIGNMENT_INFO: WeblabAssignment = WeblabAssignment::Folder(WeblabFolder {
                 title: $title,
+                assignment_text: "",
                 assignments: &[
                     $(
                         {

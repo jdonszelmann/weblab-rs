@@ -1,5 +1,5 @@
 
 [workspace]
-members = ["weblab-macros", "example-project", "weblab", "weblab-assignment-structure", "weblab-runtime-tools", "weblab-docker/user_code"]
-default-members = ["weblab-macros", "example-project", "weblab", "weblab-assignment-structure", "weblab-runtime-tools"]
+members = ["weblab-macros", "example-project", "weblab", "weblab-assignment-structure", "weblab-runtime-tools", "weblab-docker/user_code", "tests"]
+default-members = ["weblab-macros", "example-project", "weblab", "weblab-assignment-structure", "weblab-runtime-tools", "tests"]
 

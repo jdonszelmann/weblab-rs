@@ -208,7 +208,7 @@ fn recursive_generate_folder(
     match assignment {
         WeblabAssignment::Programming(ProgrammingAssignment {
             title,
-            description,
+            assignment_text,
             library_visible,
             spectest_stdout_visible: _,
             test,
@@ -239,7 +239,7 @@ fn recursive_generate_folder(
             f.write_all(test_template.as_bytes())?;
 
             let mut f = File::create(p.join("question.md"))?;
-            f.write_all(description.as_bytes())?;
+            f.write_all(assignment_text.as_bytes())?;
 
             let mut f = File::create(p.join("assignment-data.json"))?;
             let s = serde_json::to_string_pretty(&AssignmentData::new_programming(
@@ -252,7 +252,7 @@ fn recursive_generate_folder(
         }
         WeblabAssignment::Open(_) => {}
         WeblabAssignment::MultipleChoice(_) => {}
-        WeblabAssignment::Folder(WeblabFolder { title, assignments }) => {
+        WeblabAssignment::Folder(WeblabFolder { title, assignments, assignment_text: _ }) => {
             let p = path.as_ref().to_path_buf().join(sanitize(title));
 
             std::fs::create_dir_all(&p)?;
@@ -292,7 +292,7 @@ fn check_assignment_tree(assignment: &WeblabAssignment) -> Result<(), Box<dyn Er
         WeblabAssignment::Programming(_) => {}
         WeblabAssignment::Open(_) => {}
         WeblabAssignment::MultipleChoice(_) => {}
-        WeblabAssignment::Folder(WeblabFolder { title, assignments }) => {
+        WeblabAssignment::Folder(WeblabFolder { title, assignments , assignment_text: _}) => {
             let mut titles = HashSet::new();
 
             for i in *assignments {
@@ -309,10 +309,10 @@ fn check_assignment_tree(assignment: &WeblabAssignment) -> Result<(), Box<dyn Er
     Ok(())
 }
 
-pub fn error_main(assignment: WeblabAssignment) -> Result<(), Box<dyn Error>> {
+pub fn error_main(assignment: WeblabAssignment, args: &[String]) -> Result<(), Box<dyn Error>> {
     check_assignment_tree(&assignment)?;
 
-    let args: Cli = Cli::parse();
+    let args: Cli = Cli::parse_from(args);
 
     match args.command {
         Command::Generate { filetype } => match filetype {
@@ -340,8 +340,8 @@ pub fn error_main(assignment: WeblabAssignment) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn main(assignment: WeblabAssignment) {
-    if let Err(e) = error_main(assignment) {
+pub fn main(assignment: WeblabAssignment, args: &[String]) {
+    if let Err(e) = error_main(assignment, args) {
         eprintln!("{}", e);
     }
 }

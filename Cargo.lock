@@ -718,6 +718,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "tests"
+version = "0.1.0"
+dependencies = [
+ "weblab",
+]
+
+[[package]]
 name = "textwrap"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -829,20 +836,14 @@ dependencies = [
  "serde",
  "serde_json",
  "walkdir",
- "weblab-assignment-structure 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "weblab-macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "weblab-assignment-structure",
+ "weblab-macros",
  "zip",
 ]
 
 [[package]]
 name = "weblab-assignment-structure"
 version = "0.2.0"
-
-[[package]]
-name = "weblab-assignment-structure"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "648656736ddd5bb5c5caf1897b802d981cbcfe67a630800127724059e5331aa5"
 
 [[package]]
 name = "weblab-docker-runner"
@@ -865,17 +866,6 @@ dependencies = [
 [[package]]
 name = "weblab-macros"
 version = "0.2.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "weblab-macros"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "525340e08f45a4c68f5cc6bfb3bd4357e602c71d0b6b1d2aa80769a52005fc8c"
 dependencies = [
  "proc-macro2",
  "quote",
