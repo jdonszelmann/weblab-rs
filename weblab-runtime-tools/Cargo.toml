@@ -1,6 +1,6 @@
 [package]
 name = "weblab-runtime-tools"
-version = "0.1.0"
+version = "0.2.1"
 edition = "2021"
 license = "MIT"
 authors = ["Jonathan Dönszelmann <jonabent@gmail.com>"]
