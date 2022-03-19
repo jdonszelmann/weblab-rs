@@ -174,6 +174,7 @@ fn convert_to_junit(inp: Vec<TestReportMessage>) -> TestSuites {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    println!("running tests...");
     let cmd = Command::new("cargo")
         .arg("test")
         .arg("--offline")
@@ -186,6 +187,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .arg("-Z").arg("unstable-options")
         .output()?;
 
+    println!("writing stdout and stderr");
+
     let path = PathBuf::from(std::env::args().nth(1).expect("expected path to put output files"));
     std::fs::remove_dir(&path);
     std::env::set_current_dir(path);
@@ -196,13 +199,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     File::create("stdout.txt")?.write_all(&stdout)?;
     File::create("stderr.txt")?.write_all(&stderr)?;
 
+    println!("parsing test data");
+
     let messages = parse_test_output(&stdout);
 
     let junit = convert_to_junit(messages);
     let xml = XMLElement::from(junit);
 
+    println!("writing xml");
+
     let res = format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{}", xml.to_string_pretty("\n", "  "));
     File::create("results.xml")?.write_all(res.as_bytes())?;
+
+    println!("done!");
 
     Ok(())
 }

@@ -31,16 +31,17 @@ RUN mv src/main.rs src/actual_main.rs && \
     mv src/actual_main.rs src/main.rs
 
 # Remove write permission on truncate_output.sh
-RUN chmod u-w truncate_output.sh
+RUN chmod u-w+x truncate_output.sh
 
 # Run
 ENV HOME ${UHOME}
-ENV CK_XML_LOG_FILE_NAME=results.xml
 RUN mkdir ${UHOME}/output
 CMD mv solution.txt src/solution.rs       2>/dev/null; true \
  && mv library.txt  src/library.rs        2>/dev/null; true \
  && mv test.txt     src/test.rs           2>/dev/null; true \
- && cargo weblabtest ${UHOME}/output \
+ && echo "running tests, writing to ${HOME}/output" \
+ && cargo weblabtest ${HOME}/output \
+ && ls output && pwd \
  && ./truncate_output.sh
 
 
