@@ -1,4 +1,4 @@
-FROM rust:1-slim-buster
+FROM rust:1.59-buster
 WORKDIR /home/
 
 # install packages
@@ -27,7 +27,7 @@ WORKDIR ${UHOME}
 # prebuild dependencies
 RUN mv src/main.rs src/actual_main.rs && \
     mv src/fake_main.rs src/main.rs &&  \
-    cargo fetch && cargo build && \
+    cargo fetch && cargo build && cargo install cargo-weblabtest && \
     mv src/actual_main.rs src/main.rs
 
 # Remove write permission on truncate_output.sh
@@ -37,14 +37,10 @@ RUN chmod u-w truncate_output.sh
 ENV HOME ${UHOME}
 ENV CK_XML_LOG_FILE_NAME=results.xml
 RUN mkdir ${UHOME}/output
-CMD ( { \
-    mv solution.txt src/solution.rs       2>/dev/null; true \
+CMD mv solution.txt src/solution.rs       2>/dev/null; true \
  && mv library.txt  src/library.rs        2>/dev/null; true \
  && mv test.txt     src/test.rs           2>/dev/null; true \
- && cargo run --offline \
- && cd output \
- && ./../run.sh \
- ; } | tee output/stdout.txt ) 3>&1 1>&2 2>&3 | tee output/stderr.txt \
+ && cargo weblabtest ${UHOME}/output \
  && ./truncate_output.sh
 
 

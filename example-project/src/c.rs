@@ -59,7 +59,7 @@ mod assignment {
         // will verify the reference solution.
         #[test]
         fn test() {
-            assert_eq!(solution::main(), "main");
+            assert_eq!(solution::main(), "mains");
         }
     }
 

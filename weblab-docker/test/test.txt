@@ -1,0 +1,1 @@
+use super :: solution ; #[test] fn test() { solution :: main() ; }

@@ -1,3 +1,6 @@
 /target
 output
 output.zip
+stderr.txt
+stdout.txt
+results.xml

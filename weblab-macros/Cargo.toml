@@ -16,3 +16,4 @@ proc-macro = true
 syn = {version = "1.0.86", features=["fold", "full"]}
 quote = "1.0.15"
 proc-macro2 = "1.0.36"
+serde_json = "1.0.79"

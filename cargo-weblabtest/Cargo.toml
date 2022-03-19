@@ -1,14 +1,16 @@
 [package]
-name = "weblab-runtime-tools"
+name = "cargo-weblabtest"
 version = "0.2.1"
 edition = "2021"
 license = "MIT"
 authors = ["Jonathan Dönszelmann <jonabent@gmail.com>"]
-description = "Runtime helpers for weblab. Generates xml output in weblab containers"
+description = "wrapper around cargo test to provide weblab-compatible output"
 homepage = "https://github.com/jonay2000/weblab-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-xml = "0.0.1"
+simple_xml_serialize = "0.3.0"
+simple_xml_serialize_macro = {version="0.3.0", features=["process_options"]}
 serde = {version="1.0.136", features=["derive"]}
+serde_json = "1.0.79"
