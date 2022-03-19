@@ -4,18 +4,16 @@ pub use weblab_macros::*;
 
 pub mod cli;
 
-
 #[macro_export]
 macro_rules! weblab_assignment_info {
-    (self) => {
-        {
-            let w: $crate::WeblabAssignment = __WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO;
-            w
-        }
-    };
+    (self) => {{
+        let w: $crate::WeblabAssignment = __WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO;
+        w
+    }};
     ($root_module: path) => {{
         use $root_module as weblab_module;
-        let w: $crate::WeblabAssignment = weblab_module::__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO;
+        let w: $crate::WeblabAssignment =
+            weblab_module::__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO;
         w
     }};
 }

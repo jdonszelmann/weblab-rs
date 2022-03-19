@@ -116,7 +116,6 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
         .collect::<Vec<_>>()
         .join("\n");
 
-
     quote! {
         pub mod __WEBLAB_ASSIGNMENT_METADATA {
             use weblab::*;

@@ -57,10 +57,18 @@ impl WeblabAssignment {
     }
     pub fn assignment_text(&self) -> &str {
         match self {
-            WeblabAssignment::Programming(ProgrammingAssignment { assignment_text, .. }) => assignment_text,
-            WeblabAssignment::Open(OpenQuestion { assignment_text, .. }) => assignment_text,
-            WeblabAssignment::MultipleChoice(MCQuestion { assignment_text, .. }) => assignment_text,
-            WeblabAssignment::Folder(WeblabFolder { assignment_text, .. }) => assignment_text,
+            WeblabAssignment::Programming(ProgrammingAssignment {
+                assignment_text, ..
+            }) => assignment_text,
+            WeblabAssignment::Open(OpenQuestion {
+                assignment_text, ..
+            }) => assignment_text,
+            WeblabAssignment::MultipleChoice(MCQuestion {
+                assignment_text, ..
+            }) => assignment_text,
+            WeblabAssignment::Folder(WeblabFolder {
+                assignment_text, ..
+            }) => assignment_text,
         }
     }
 }

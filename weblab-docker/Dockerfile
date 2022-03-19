@@ -36,9 +36,9 @@ RUN chmod u-w+x truncate_output.sh
 # Run
 ENV HOME ${UHOME}
 RUN mkdir ${UHOME}/output
-CMD mv solution.txt src/solution.rs       2>/dev/null; true \
- && mv library.txt  src/library.rs        2>/dev/null; true \
- && mv test.txt     src/test.rs           2>/dev/null; true \
+CMD cp solution.txt src/solution.rs       2>/dev/null; true \
+ && cp library.txt  src/library.rs        2>/dev/null; true \
+ && cp test.txt     src/test.rs           2>/dev/null; true \
  && echo "running tests, writing to ${HOME}/output" \
  && cargo weblabtest ${HOME}/output \
  && ls output && pwd \

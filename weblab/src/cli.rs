@@ -252,7 +252,11 @@ fn recursive_generate_folder(
         }
         WeblabAssignment::Open(_) => {}
         WeblabAssignment::MultipleChoice(_) => {}
-        WeblabAssignment::Folder(WeblabFolder { title, assignments, assignment_text: _ }) => {
+        WeblabAssignment::Folder(WeblabFolder {
+            title,
+            assignments,
+            assignment_text: _,
+        }) => {
             let p = path.as_ref().to_path_buf().join(sanitize(title));
 
             std::fs::create_dir_all(&p)?;
@@ -292,7 +296,11 @@ fn check_assignment_tree(assignment: &WeblabAssignment) -> Result<(), Box<dyn Er
         WeblabAssignment::Programming(_) => {}
         WeblabAssignment::Open(_) => {}
         WeblabAssignment::MultipleChoice(_) => {}
-        WeblabAssignment::Folder(WeblabFolder { title, assignments , assignment_text: _}) => {
+        WeblabAssignment::Folder(WeblabFolder {
+            title,
+            assignments,
+            assignment_text: _,
+        }) => {
             let mut titles = HashSet::new();
 
             for i in *assignments {
