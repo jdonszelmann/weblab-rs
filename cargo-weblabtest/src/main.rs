@@ -189,9 +189,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("writing stdout and stderr");
 
-    let path = PathBuf::from(std::env::args().nth(1).expect("expected path to put output files"));
+    let path = PathBuf::from(std::env::args().nth(2).expect("expected path to put output files"));
     std::fs::create_dir_all(&path);
-    std::env::set_current_dir(path);
+    std::env::set_current_dir(&path);
 
     println!("changing directory to {path:?}");
 
