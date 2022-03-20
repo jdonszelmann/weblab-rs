@@ -6,12 +6,8 @@ use quote::{quote, quote_spanned, ToTokens};
 use std::mem;
 use syn::__private::TokenStream2;
 use syn::fold::{fold_item, Fold};
+use syn::{Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro, ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion, ItemUse};
 use syn::spanned::Spanned;
-use syn::{
-    Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro,
-    ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion,
-    ItemUse,
-};
 
 mod attr;
 
@@ -49,10 +45,10 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
     let mut reference = FindAnnotated::reference();
     let mut template = FindAnnotated::template();
 
-    let res = reference.fold_item_mod(module.clone());
-    let _ = template.fold_item_mod(module); // for side effects
+    let reference_modified = reference.fold_item_mod(module.clone());
+    let template_modified = template.fold_item_mod(module); // for side effects
 
-    let mut title = res.ident.to_string();
+    let mut title = reference_modified.ident.to_string();
     let mut num_titles = 0;
     for i in &attrs {
         if let Attr::Title(x) = i {
@@ -82,6 +78,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
         .unwrap_or_else(|| "".to_string());
     let referencesolution =
         if let Some(i) = reference.solution().map(|i| quote! {#(#i)*}.to_string()) {
+            println!("{}", i);
             i
         } else {
             return quote! {
@@ -141,7 +138,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
 
         #[allow(unused_imports)]
         #[allow(dead_code)]
-        #res
+        #reference_modified
     }.into()
 }
 
@@ -226,7 +223,21 @@ impl FindAnnotated {
     }
 }
 
+fn parse_only_contents(t: &TokenStream2) -> Item {
+    // let res: Block = syn::parse2(quote! {"{ #tt }"})?;
+    // Ok(Item)
+    // TODO: parse as block so inner macros get expanded
+    Item::Verbatim(t.to_token_stream())
+}
+
+
 impl Fold for FindAnnotated {
+    // fn fold_stmt(&mut self, i: Stmt) -> Stmt {
+    //     match stmt {
+    //
+    //     }
+    // }
+
     fn fold_item(&mut self, mut i: Item) -> Item {
         let attrs = match &mut i {
             Item::Const(ItemConst { attrs, .. })
@@ -272,15 +283,25 @@ impl Fold for FindAnnotated {
         };
 
         if let Item::Macro(ItemMacro { mac, .. }) = &i {
-            if let Some(i) = mac.path.get_ident() {
-                if i == "template_only" && self.is_reference() {
-                    return Item::Verbatim(TokenStream2::new());
-                }
-                if i == "solution_only" && self.is_template() {
-                    return Item::Verbatim(TokenStream2::new());
+            if let Some(ident) = mac.path.get_ident() {
+                if ident == "template_only" {
+                    if self.is_reference() {
+                        return Item::Verbatim(TokenStream2::new());
+                    } else {
+                        i = parse_only_contents(&mac.tokens);
+                    }
+                } else if  ident == "solution_only" {
+                    if self.is_template() {
+                        return Item::Verbatim(TokenStream2::new());
+                    } else {
+                        i = parse_only_contents(&mac.tokens);
+                    }
                 }
             }
         }
+
+
+        let i = fold_item(self, i);
 
         if let Item::Mod(ref i) = i {
             match self {
@@ -372,7 +393,7 @@ impl Fold for FindAnnotated {
             }
         }
 
-        fold_item(self, i)
+        i
     }
 }
 
