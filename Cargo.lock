@@ -86,7 +86,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-weblabtest"
-version = "0.2.5"
+version = "0.2.7"
 dependencies = [
  "serde",
  "serde_json",
@@ -963,7 +963,7 @@ dependencies = [
 
 [[package]]
 name = "weblab-macros"
-version = "0.2.6"
+version = "0.2.7"
 dependencies = [
  "cargo_toml",
  "proc-macro2 1.0.36",
