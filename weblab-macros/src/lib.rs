@@ -4,13 +4,28 @@ use proc_macro::{Span, TokenStream};
 use proc_macro2::{Span as Span2};
 use quote::{quote, quote_spanned, ToTokens};
 use std::mem;
-use cargo_toml::Manifest;
 use proc_macro2::TokenStream as TokenStream2;
 use syn::fold::{fold_item, Fold};
 use syn::{Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro, ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion, ItemUse, UseGroup, UseName, UsePath, UseRename, UseTree};
 use syn::spanned::Spanned;
 
 mod attr;
+
+const ALLOWED_CRATES: &[&str] = [
+    "serde",
+    "lazy_static",
+    "async-trait",
+    "futures",
+    "tokio",
+    "log",
+    "pretty_env_logger",
+    "rand",
+    "regex",
+    "serde_json",
+    "itertools",
+    "parking_lot",
+    "petgraph",
+].as_slice();
 
 #[proc_macro]
 pub fn open_question(_item: TokenStream) -> TokenStream {
@@ -238,11 +253,7 @@ fn should_drop(t: &UseTree) -> Result<bool, String> {
                 return Ok(true);
             }
 
-            let allowed = Manifest::from_slice(include_bytes!("../../weblab-docker/user_code/Cargo.toml"))
-                .map_err(|x| x.to_string())?
-                .dependencies.into_iter().map(|(x, _)| x).collect::<Vec<_>>();
-
-            if allowed.contains(&ident.to_string()) {
+            if ALLOWED_CRATES.contains(&ident.to_string().as_str()) {
                 Ok(false)
             } else if ident.to_string() == "crate" {
                 Err("crate-relative imports break on weblab since weblab's generated project structure will be different to this one. Use relative imports (with super)".to_string())
