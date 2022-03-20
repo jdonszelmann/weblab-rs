@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-mkdir -p $SCRIPT_DIR/output
+mkdir -p $SCRIPT_DIR/test/output
 
 docker build -t jonay2000/weblab-rs $SCRIPT_DIR
 

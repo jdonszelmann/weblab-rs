@@ -25,6 +25,10 @@ struct TestSuite {
 struct TestCase {
     #[sxs_type_attr]
     name: String,
+
+    #[sxs_type_text]
+    placeholder: String,
+
     #[sxs_type_element]
     failure: Option<Failure>,
 }
@@ -141,6 +145,7 @@ fn convert_to_junit(inp: Vec<TestReportMessage>) -> TestSuites {
     for (name, t) in tests {
         testcases.push(TestCase {
             name,
+            placeholder: "".to_string(),
             failure: match t {
                 TestStatus::Passed => None,
                 TestStatus::Failed => Some(Failure {

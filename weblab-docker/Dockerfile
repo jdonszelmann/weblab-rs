@@ -42,7 +42,7 @@ CMD cp solution.txt src/solution.rs       2>/dev/null; true \
  && echo "running tests, writing to ${HOME}/output" \
  && cargo weblabtest ${HOME}/output \
  && ls output && pwd \
- && ./truncate_output.sh && bash
+ && ./truncate_output.sh
 
 
 
