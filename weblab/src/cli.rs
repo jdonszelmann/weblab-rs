@@ -7,6 +7,7 @@ use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::{fs, io, process};
 use walkdir::WalkDir;
 use weblab_assignment_structure::{ProgrammingAssignment, WeblabAssignment, WeblabFolder};
 use zip::write::FileOptions;
@@ -201,6 +202,17 @@ fn generate_zip(
     Ok(())
 }
 
+fn write_and_fmt<P: AsRef<Path>, S: ToString>(path: P, code: S) -> io::Result<()> {
+    fs::write(&path, code.to_string())?;
+
+    process::Command::new("rustfmt")
+        .arg(path.as_ref())
+        .spawn()?
+        .wait()?;
+
+    Ok(())
+}
+
 fn recursive_generate_folder(
     path: impl AsRef<Path>,
     assignment: &WeblabAssignment,
@@ -209,7 +221,7 @@ fn recursive_generate_folder(
         WeblabAssignment::Programming(ProgrammingAssignment {
             title,
             assignment_text,
-            library_visible,
+            mut library_visible,
             spectest_stdout_visible: _,
             test,
             solution,
@@ -222,21 +234,17 @@ fn recursive_generate_folder(
             std::fs::create_dir_all(&p)?;
 
             if let Some(l) = library {
-                let mut f = File::create(p.join("library.rs"))?;
-                f.write_all(l.as_bytes())?;
+                write_and_fmt(p.join("library.rs"), l)?;
+            } else {
+                // write but force invisible when there's no library
+                write_and_fmt(p.join("library.rs"), "")?;
+                library_visible = false;
             }
 
-            let mut f = File::create(p.join("solution.rs"))?;
-            f.write_all(solution.as_bytes())?;
-
-            let mut f = File::create(p.join("solution_template.rs"))?;
-            f.write_all(solution_template.as_bytes())?;
-
-            let mut f = File::create(p.join("test.rs"))?;
-            f.write_all(test.as_bytes())?;
-
-            let mut f = File::create(p.join("test_template.rs"))?;
-            f.write_all(test_template.as_bytes())?;
+            write_and_fmt(p.join("solution.rs"), solution)?;
+            write_and_fmt(p.join("solution_template.rs"), solution_template)?;
+            write_and_fmt(p.join("test.rs"), test)?;
+            write_and_fmt(p.join("test_template.rs"), test_template)?;
 
             let mut f = File::create(p.join("question.md"))?;
             f.write_all(assignment_text.as_bytes())?;
@@ -244,7 +252,7 @@ fn recursive_generate_folder(
             let mut f = File::create(p.join("assignment-data.json"))?;
             let s = serde_json::to_string_pretty(&AssignmentData::new_programming(
                 title,
-                *library_visible,
+                library_visible,
                 false,
                 false,
             ))?;
