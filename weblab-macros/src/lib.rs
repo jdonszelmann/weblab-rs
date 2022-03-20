@@ -1,17 +1,14 @@
 use crate::attr::{parse_attr, parse_attr_stream, Attr, ParseAttrStatus};
 use crate::Attr::{Solution, SolutionTemplate};
 use proc_macro::{Span, TokenStream};
-use proc_macro2::Span as Span2;
+use proc_macro2::{Span as Span2};
 use quote::{quote, quote_spanned, ToTokens};
 use std::mem;
-use syn::__private::TokenStream2;
+use cargo_toml::Manifest;
+use proc_macro2::TokenStream as TokenStream2;
 use syn::fold::{fold_item, Fold};
+use syn::{Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro, ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion, ItemUse, UseGroup, UseName, UsePath, UseRename, UseTree};
 use syn::spanned::Spanned;
-use syn::{
-    Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro,
-    ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion,
-    ItemUse,
-};
 
 mod attr;
 
@@ -65,7 +62,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
         return quote! {
             compile_error!("assignment has more than one title");
         }
-        .into();
+            .into();
     }
 
     let spectest = if let Some(i) = reference.test().map(|i| quote! {#(#i)*}.to_string()) {
@@ -74,7 +71,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
         return quote! {
             compile_error!("assignment has no spectest");
         }
-        .into();
+            .into();
     };
     let testtemplate = template
         .test()
@@ -87,7 +84,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
             return quote! {
                 compile_error!("assignment has no reference solution");
             }
-            .into();
+                .into();
         };
     let solutiontemplate = template
         .solution()
@@ -233,13 +230,63 @@ fn parse_only_contents(t: &TokenStream2) -> Item {
     Item::Verbatim(t.to_token_stream())
 }
 
-impl Fold for FindAnnotated {
-    // fn fold_stmt(&mut self, i: Stmt) -> Stmt {
-    //     match stmt {
-    //
-    //     }
-    // }
 
+fn should_drop(t: &UseTree) -> Result<bool, String> {
+    match t {
+        UseTree::Path(UsePath { ident, .. }) | UseTree::Name(UseName { ident }) | UseTree::Rename(UseRename { ident, .. }) => {
+            if ident.to_string() == "weblab" {
+                return Ok(true);
+            }
+
+            let allowed = Manifest::from_slice(include_bytes!("../../weblab-docker/user_code/Cargo.toml"))
+                .map_err(|x| x.to_string())?
+                .dependencies.into_iter().map(|(x, _)| x).collect::<Vec<_>>();
+
+            if allowed.contains(&ident.to_string()) {
+                Ok(false)
+            } else if ident.to_string() == "crate" {
+                Err("crate-relative imports break on weblab since weblab's generated project structure will be different to this one. Use relative imports (with super)".to_string())
+            } else if ident.to_string() == "super" {
+                Ok(false)
+            } else {
+                Err(format!("{ident} cannot be imported in weblab and is therefore forbidden"))
+            }
+        }
+        UseTree::Glob(_) => {
+            Ok(false)
+        }
+        UseTree::Group(UseGroup { items, .. }) => {
+            let res = items.iter().map(|i| should_drop(i)).collect::<Result<Vec<_>, _>>()?;
+            if res.iter().all(|i| *i) {
+                Ok(true)
+            } else if res.iter().all(|i| !*i) {
+                Ok(false)
+            } else {
+                Err(format!("parts of this use are allowed on weblab and others are not."))
+            }
+        }
+    }
+}
+
+struct DropUse;
+
+impl Fold for DropUse {
+    fn fold_item(&mut self, item: Item) -> Item {
+        if let Item::Use(ItemUse { tree, .. }) = &item {
+            match should_drop(tree) {
+                Ok(true) => {
+                    return Item::Verbatim(TokenStream2::new());
+                }
+                Ok(false) => { /* do nothing */ }
+                _ => unreachable!("all errors should have been filtered out by FindAnnotated")
+            }
+        }
+
+        fold_item(self, item)
+    }
+}
+
+impl Fold for FindAnnotated {
     fn fold_item(&mut self, mut item: Item) -> Item {
         let attrs = match &mut item {
             Item::Const(ItemConst { attrs, .. })
@@ -302,9 +349,19 @@ impl Fold for FindAnnotated {
             }
         }
 
-        let folded = fold_item(self, item);
+        if let Item::Use(ItemUse { tree, .. }) = &item {
+            if let Err(e) = should_drop(tree) {
+                return Item::Verbatim(quote_spanned! {
+                    item.span() =>
+                    compile_error!(#e);
+                });
+            }
+        }
 
-        if let Item::Mod(ref i) = folded {
+        let folded = fold_item(self, item);
+        let without_use = DropUse.fold_item(folded.clone());
+
+        if let Item::Mod(ref i) = without_use {
             match self {
                 FindAnnotated::Template {
                     solution,
@@ -317,7 +374,7 @@ impl Fold for FindAnnotated {
                                 return Item::Verbatim(quote_spanned! {
                                     i.span() =>
                                     compile_error!("multiple solution template blocks defined")
-                                })
+                                });
                             }
                             Status::Maybe(_) | Status::Unkown => {
                                 *solution = Status::Certain(i.clone());
@@ -329,7 +386,7 @@ impl Fold for FindAnnotated {
                                 return Item::Verbatim(quote_spanned! {
                                     i.span() =>
                                     compile_error!("multiple solution template blocks defined")
-                                })
+                                });
                             }
                             Status::Unkown => {
                                 *solution = Status::Maybe(i.clone());
@@ -341,7 +398,7 @@ impl Fold for FindAnnotated {
                                 return Item::Verbatim(quote_spanned! {
                                     i.span() =>
                                     compile_error!("multiple test template blocks defined")
-                                })
+                                });
                             }
                             Status::Maybe(_) | Status::Unkown => {
                                 *test = Status::Certain(i.clone());
@@ -353,7 +410,7 @@ impl Fold for FindAnnotated {
                                 return Item::Verbatim(quote_spanned! {
                                     i.span() =>
                                     compile_error!("multiple test template blocks defined")
-                                })
+                                });
                             }
                             Status::Unkown => {
                                 *test = Status::Maybe(i.clone());
@@ -415,8 +472,8 @@ pub fn weblab(attr: TokenStream, item: TokenStream) -> TokenStream {
             #[weblab(...)] attributes and doc comments need to be below it or inside the \
             module that's annotated with #[weblab(programming_assignment)]",
         )
-        .to_compile_error()
-        .into();
+            .to_compile_error()
+            .into();
     };
 
     res
