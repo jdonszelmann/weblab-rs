@@ -1,13 +1,17 @@
 use crate::attr::{parse_attr, parse_attr_stream, Attr, ParseAttrStatus};
 use crate::Attr::{Solution, SolutionTemplate};
 use proc_macro::{Span, TokenStream};
-use proc_macro2::{Span as Span2};
+use proc_macro2::Span as Span2;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, quote_spanned, ToTokens};
 use std::mem;
-use proc_macro2::TokenStream as TokenStream2;
 use syn::fold::{fold_item, Fold};
-use syn::{Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro, ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion, ItemUse, UseGroup, UseName, UsePath, UseRename, UseTree};
 use syn::spanned::Spanned;
+use syn::{
+    Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro,
+    ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion,
+    ItemUse, UseGroup, UseName, UsePath, UseRename, UseTree,
+};
 
 mod attr;
 
@@ -25,7 +29,8 @@ const ALLOWED_CRATES: &[&str] = [
     "itertools",
     "parking_lot",
     "petgraph",
-].as_slice();
+]
+.as_slice();
 
 #[proc_macro]
 pub fn open_question(_item: TokenStream) -> TokenStream {
@@ -77,7 +82,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
         return quote! {
             compile_error!("assignment has more than one title");
         }
-            .into();
+        .into();
     }
 
     let spectest = if let Some(i) = reference.test().map(|i| quote! {#(#i)*}.to_string()) {
@@ -86,7 +91,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
         return quote! {
             compile_error!("assignment has no spectest");
         }
-            .into();
+        .into();
     };
     let testtemplate = template
         .test()
@@ -99,7 +104,7 @@ fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> Tok
             return quote! {
                 compile_error!("assignment has no reference solution");
             }
-                .into();
+            .into();
         };
     let solutiontemplate = template
         .solution()
@@ -245,35 +250,39 @@ fn parse_only_contents(t: &TokenStream2) -> Item {
     Item::Verbatim(t.to_token_stream())
 }
 
-
 fn should_drop(t: &UseTree) -> Result<bool, String> {
     match t {
-        UseTree::Path(UsePath { ident, .. }) | UseTree::Name(UseName { ident }) | UseTree::Rename(UseRename { ident, .. }) => {
-            if ident.to_string() == "weblab" {
+        UseTree::Path(UsePath { ident, .. })
+        | UseTree::Name(UseName { ident })
+        | UseTree::Rename(UseRename { ident, .. }) => {
+            if ident == "weblab" {
                 return Ok(true);
             }
 
             if ALLOWED_CRATES.contains(&ident.to_string().as_str()) {
                 Ok(false)
-            } else if ident.to_string() == "crate" {
+            } else if ident == "crate" {
                 Err("crate-relative imports break on weblab since weblab's generated project structure will be different to this one. Use relative imports (with super)".to_string())
-            } else if ident.to_string() == "super" {
+            } else if ident == "super" {
                 Ok(false)
             } else {
-                Err(format!("{ident} cannot be imported in weblab and is therefore forbidden"))
+                Err(format!(
+                    "{ident} cannot be imported in weblab and is therefore forbidden"
+                ))
             }
         }
-        UseTree::Glob(_) => {
-            Ok(false)
-        }
+        UseTree::Glob(_) => Ok(false),
         UseTree::Group(UseGroup { items, .. }) => {
-            let res = items.iter().map(|i| should_drop(i)).collect::<Result<Vec<_>, _>>()?;
+            let res = items
+                .iter()
+                .map(should_drop)
+                .collect::<Result<Vec<_>, _>>()?;
             if res.iter().all(|i| *i) {
                 Ok(true)
             } else if res.iter().all(|i| !*i) {
                 Ok(false)
             } else {
-                Err(format!("parts of this use are allowed on weblab and others are not."))
+                Err("parts of this use are allowed on weblab and others are not.".to_string())
             }
         }
     }
@@ -289,7 +298,7 @@ impl Fold for DropUse {
                     return Item::Verbatim(TokenStream2::new());
                 }
                 Ok(false) => { /* do nothing */ }
-                _ => unreachable!("all errors should have been filtered out by FindAnnotated")
+                _ => unreachable!("all errors should have been filtered out by FindAnnotated"),
             }
         }
 
@@ -483,8 +492,8 @@ pub fn weblab(attr: TokenStream, item: TokenStream) -> TokenStream {
             #[weblab(...)] attributes and doc comments need to be below it or inside the \
             module that's annotated with #[weblab(programming_assignment)]",
         )
-            .to_compile_error()
-            .into();
+        .to_compile_error()
+        .into();
     };
 
     res

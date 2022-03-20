@@ -943,7 +943,7 @@ dependencies = [
 
 [[package]]
 name = "weblab-macros"
-version = "0.2.8"
+version = "0.2.9"
 dependencies = [
  "proc-macro2 1.0.36",
  "quote 1.0.15",
