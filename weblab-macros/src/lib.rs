@@ -282,7 +282,7 @@ fn should_drop(t: &UseTree) -> Result<bool, String> {
             } else if res.iter().all(|i| !*i) {
                 Ok(false)
             } else {
-                Err("parts of this use are allowed on weblab and others are not.".to_string())
+                Err("can't filter out only parts of this `use` statement. Some parts are not supposed to be shown to students on weblab.".to_string())
             }
         }
     }

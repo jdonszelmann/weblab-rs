@@ -108,11 +108,11 @@ impl AssignmentData {
         Self {
             question: Some(Question {
                 r#type: "ProgrammingQuestion".to_string(),
-                language: "rust".to_string(),
+                language: "docker:cese4000-2022-rust".to_string(),
                 library_visible,
                 program_output_visible,
                 spec_test_details_visible,
-                docker_image: "rust".to_string(),
+                docker_image: "".to_string(),
 
                 editor_language_id: "rust".to_string(),
                 editor_test_language_id: "rust".to_string(),

@@ -97,20 +97,22 @@ enum TestReportMessage {
     },
 }
 
-fn parse_test_output(stream: &[u8]) -> Vec<TestReportMessage> {
+fn parse_test_output(stream: &[u8]) -> (Vec<TestReportMessage>, Vec<u8>) {
     let mut res = Vec::new();
+    let mut res_stream = Vec::new();
 
     for i in stream.split(|i| i == &b'\n') {
-        #[allow(clippy::single_match)]
         match serde_json::from_slice(i) {
             Ok(i) => res.push(i),
             Err(_) => {
+                res_stream.extend_from_slice(i);
+                res_stream.push(b'\n');
                 // eprintln!("{}\n{e}", String::from_utf8_lossy(i))
             }
         }
     }
 
-    res
+    (res, res_stream)
 }
 
 enum TestStatus {
@@ -193,12 +195,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let stdout = cmd.stdout;
     let stderr = cmd.stderr;
 
-    File::create("stdout.txt")?.write_all(&stdout)?;
-    File::create("stderr.txt")?.write_all(&stderr)?;
-
     println!("parsing test data");
 
-    let messages = parse_test_output(&stdout);
+    let (messages, filtered_stdout) = parse_test_output(&stdout);
+
+    File::create("stdout.txt")?.write_all(&filtered_stdout)?;
+    File::create("stderr.txt")?.write_all(&stderr)?;
 
     let junit = convert_to_junit(messages);
     let xml = XMLElement::from(junit);
