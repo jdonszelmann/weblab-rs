@@ -71,6 +71,15 @@ enum SuiteEventType {
         measured: usize,
         filtered_out: usize,
     },
+    #[serde(rename = "failed")]
+    Failed {
+        passed: usize,
+        failed: usize,
+        allowed_fail: usize,
+        ignored: usize,
+        measured: usize,
+        filtered_out: usize,
+    },
     #[serde(rename = "started")]
     Started { test_count: usize },
 }

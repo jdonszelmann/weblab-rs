@@ -9,7 +9,8 @@ mod assignment {
     #[weblab(solution)]
     mod solution {
         pub fn main() {
-            println!("main!");
+            // println!("main!");
+            todo!()
         }
     }
 
