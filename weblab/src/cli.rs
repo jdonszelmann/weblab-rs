@@ -215,8 +215,8 @@ fn write_and_fmt<P: AsRef<Path>, S: ToString>(path: P, code: S) -> io::Result<()
         .wait()?;
 
     let code = fs::read_to_string(&path)?;
-    let replaced = r.replace(&code, |caps: &Captures| {
-        format!("///{}", rq.replace(&caps[1], "$1"))
+    let replaced = r.replace_all(&code, |caps: &Captures| {
+        format!("///{}", rq.replace_all(&caps[1], "$1"))
     });
     fs::write(&path, replaced.as_ref())?;
 
