@@ -210,9 +210,7 @@ impl FindAnnotated {
     pub fn library(&self) -> Option<Vec<Item>> {
         match self {
             FindAnnotated::Template { library, .. } => {
-                library.clone()
-                    .and_then(|i| i.content)
-                    .map(|(_, x)| x)
+                library.clone().and_then(|i| i.content).map(|(_, x)| x)
             }
             FindAnnotated::Reference { .. } => None,
         }

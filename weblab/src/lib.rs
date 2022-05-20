@@ -76,10 +76,3 @@ macro_rules! weblab_folder {
         weblab_folder!(stringify!($name), $($module),*);
     };
 }
-
-#[macro_export]
-macro_rules! main {
-    () => {
-        fn main() {}
-    };
-}

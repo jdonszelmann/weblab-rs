@@ -8,9 +8,10 @@ use weblab::weblab;
 mod assignment {
     #[weblab(solution)]
     mod solution {
+        /// Let's use a doc comment here
         pub fn main() {
-            // println!("main!");
-            todo!()
+            println!("main!");
+            // todo!()
         }
     }
 

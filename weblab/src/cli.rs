@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, io, process};
+use regex::Captures;
 use walkdir::WalkDir;
 use weblab_assignment_structure::{ProgrammingAssignment, WeblabAssignment, WeblabFolder};
 use zip::write::FileOptions;
@@ -203,12 +204,21 @@ fn generate_zip(
 }
 
 fn write_and_fmt<P: AsRef<Path>, S: ToString>(path: P, code: S) -> io::Result<()> {
+    let r = regex::Regex::new(r#"#\[doc *= *"(.*)"\]"#).expect("should compile");
+    let rq = regex::Regex::new(r#"\\(.)"#).expect("should compile");
+
     fs::write(&path, code.to_string())?;
 
     process::Command::new("rustfmt")
         .arg(path.as_ref())
         .spawn()?
         .wait()?;
+
+    let code = fs::read_to_string(&path)?;
+    let replaced = r.replace(&code, |caps: &Captures| {
+        format!("///{}", rq.replace(&caps[1], "$1"))
+    });
+    fs::write(&path, replaced.as_ref())?;
 
     Ok(())
 }
