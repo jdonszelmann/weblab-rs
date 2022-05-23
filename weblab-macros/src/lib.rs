@@ -29,6 +29,7 @@ const ALLOWED_CRATES: &[&str] = [
     "itertools",
     "parking_lot",
     "petgraph",
+    "quickcheck",
 ]
 .as_slice();
 
