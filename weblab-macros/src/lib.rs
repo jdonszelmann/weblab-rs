@@ -1,13 +1,17 @@
 use crate::attr::{parse_attr, parse_attr_stream, Attr, ParseAttrStatus};
 use crate::Attr::{Solution, SolutionTemplate};
 use proc_macro::{Span, TokenStream};
-use proc_macro2::{Ident, Span as Span2};
+use proc_macro2::Span as Span2;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, quote_spanned, ToTokens};
 use std::mem;
 use syn::fold::{fold_item, Fold};
 use syn::spanned::Spanned;
-use syn::{Abi, AngleBracketedGenericArguments, Arm, Attribute, AttrStyle, BareFnArg, Binding, BinOp, Block, BoundLifetimes, ConstParam, Constraint, Data, DataEnum, DataStruct, DataUnion, DeriveInput, Expr, ExprArray, ExprAssign, ExprAssignOp, ExprAsync, ExprAwait, ExprBinary, ExprBlock, ExprBox, ExprBreak, ExprCall, ExprCast, ExprClosure, ExprContinue, ExprField, ExprForLoop, ExprGroup, ExprIf, ExprIndex, ExprLet, ExprLit, ExprLoop, ExprMacro, ExprMatch, ExprMethodCall, ExprParen, ExprPath, ExprRange, ExprReference, ExprRepeat, ExprReturn, ExprStruct, ExprTry, ExprTryBlock, ExprTuple, ExprType, ExprUnary, ExprUnsafe, ExprWhile, ExprYield, Field, FieldPat, Fields, FieldsNamed, FieldsUnnamed, FieldValue, File, FnArg, ForeignItem, ForeignItemFn, ForeignItemMacro, ForeignItemStatic, ForeignItemType, GenericArgument, GenericMethodArgument, GenericParam, Generics, ImplItem, ImplItemConst, ImplItemMacro, ImplItemMethod, ImplItemType, Index, Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro, ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion, ItemUse, Label, Lifetime, LifetimeDef, Lit, LitBool, LitByte, LitByteStr, LitChar, LitFloat, LitInt, LitStr, Local, Macro, MacroDelimiter, Member, Meta, MetaList, MetaNameValue, MethodTurbofish, NestedMeta, ParenthesizedGenericArguments, Pat, PatBox, Path, PathArguments, PathSegment, PatIdent, PatLit, PatMacro, PatOr, PatPath, PatRange, PatReference, PatRest, PatSlice, PatStruct, PatTuple, PatTupleStruct, PatType, PatWild, PredicateEq, PredicateLifetime, PredicateType, QSelf, RangeLimits, Receiver, ReturnType, Signature, Stmt, TraitBound, TraitBoundModifier, TraitItem, TraitItemConst, TraitItemMacro, TraitItemMethod, TraitItemType, Type, TypeArray, TypeBareFn, TypeGroup, TypeImplTrait, TypeInfer, TypeMacro, TypeNever, TypeParam, TypeParamBound, TypeParen, TypePath, TypePtr, TypeReference, TypeSlice, TypeTraitObject, TypeTuple, UnOp, UseGlob, UseGroup, UseName, UsePath, UseRename, UseTree, Variadic, Variant, VisCrate, Visibility, VisPublic, VisRestricted, WhereClause, WherePredicate};
+use syn::{
+    Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro,
+    ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion,
+    ItemUse, Macro, MacroDelimiter, UseGroup, UseName, UsePath, UseRename, UseTree,
+};
 
 mod attr;
 
@@ -306,13 +310,17 @@ impl Fold for FindAnnotated {
     fn fold_macro(&mut self, mut i: Macro) -> Macro {
         const TARGETS: &[&str] = &["template_only", "solution_only"];
 
-
-        let ident = i.path.segments.last().expect("no segments in path").ident.to_string();
+        let ident = i
+            .path
+            .segments
+            .last()
+            .expect("no segments in path")
+            .ident
+            .to_string();
 
         let msg = format!("use braces in {}", ident);
 
-        if !matches!(i.delimiter, MacroDelimiter::Brace(_)) &&
-            TARGETS.contains(&ident.as_str()) {
+        if !matches!(i.delimiter, MacroDelimiter::Brace(_)) && TARGETS.contains(&ident.as_str()) {
             i.tokens = quote_spanned! {
                 i.span() =>
                 compile_error!(#msg);
@@ -322,7 +330,7 @@ impl Fold for FindAnnotated {
 
         i
     }
-    
+
     fn fold_item(&mut self, mut item: Item) -> Item {
         let attrs = match &mut item {
             Item::Const(ItemConst { attrs, .. })
@@ -513,10 +521,4 @@ pub fn weblab(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     res
-}
-
-
-#[proc_macro_attribute]
-pub fn test(attr: TokenStream, item: TokenStream) -> TokenStream {
-    quote! {}.into()
 }

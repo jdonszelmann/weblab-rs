@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use regex::Captures;
 use sanitize_filename::sanitize;
 use serde::Serialize;
 use std::collections::HashSet;
@@ -8,7 +9,6 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, io, process};
-use regex::Captures;
 use walkdir::WalkDir;
 use weblab_assignment_structure::{ProgrammingAssignment, WeblabAssignment, WeblabFolder};
 use zip::write::FileOptions;
