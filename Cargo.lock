@@ -481,6 +481,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "path-slash"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3cacbb3c4ff353b534a67fb8d7524d00229da4cb1dc8c79f4db96e375ab5b619"
+
+[[package]]
 name = "pathdiff"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -937,9 +943,10 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
 name = "weblab"
-version = "0.2.16"
+version = "0.2.17"
 dependencies = [
  "clap",
+ "path-slash",
  "pathdiff",
  "regex",
  "sanitize-filename",

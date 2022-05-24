@@ -9,6 +9,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, io, process};
+use path_slash::PathBufExt;
 use walkdir::WalkDir;
 use weblab_assignment_structure::{ProgrammingAssignment, WeblabAssignment, WeblabFolder};
 use zip::write::FileOptions;
@@ -188,9 +189,9 @@ fn generate_zip(
         let relative = pathdiff::diff_paths(entry.path(), &folder_path).expect("must be prefix");
 
         if metadata.is_dir() {
-            w.add_directory(relative.to_string_lossy(), FileOptions::default())?;
+            w.add_directory(relative.to_slash_lossy(), FileOptions::default())?;
         } else {
-            w.start_file(relative.to_string_lossy(), FileOptions::default())?;
+            w.start_file(relative.to_slash_lossy(), FileOptions::default())?;
             let mut f = File::open(entry.path())?;
             let mut contents = Vec::new();
             f.read_to_end(&mut contents)?;
