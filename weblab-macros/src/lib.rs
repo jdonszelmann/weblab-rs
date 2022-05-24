@@ -30,6 +30,7 @@ const ALLOWED_CRATES: &[&str] = [
     "parking_lot",
     "petgraph",
     "quickcheck",
+    "quickcheck_macros",
 ]
 .as_slice();
 

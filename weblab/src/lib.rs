@@ -72,6 +72,7 @@ macro_rules! weblab_folder {
             });
         }
     };
+
     ($name: ident, $($module: path),* $(,)?) => {
         weblab_folder!(stringify!($name), $($module),*);
     };
