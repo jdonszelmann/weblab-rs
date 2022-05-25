@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use path_slash::PathBufExt;
 use regex::Captures;
 use sanitize_filename::sanitize;
 use serde::Serialize;
@@ -9,9 +10,11 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, io, process};
-use path_slash::PathBufExt;
 use walkdir::WalkDir;
-use weblab_assignment_structure::{InlineQuestionList, MCOption, MCQuestion, MCStyle, OpenQuestion, ProgrammingAssignment, WeblabAssignment, WeblabFolder};
+use weblab_assignment_structure::{
+    InlineQuestionList, MCOption, MCQuestion, MCStyle, OpenQuestion, ProgrammingAssignment,
+    WeblabAssignment, WeblabFolder,
+};
 use zip::write::FileOptions;
 use zip::ZipWriter;
 
@@ -115,7 +118,6 @@ struct Question {
     alternatives: Vec<Alternative>,
 }
 
-
 #[derive(Serialize)]
 struct Child {
     #[serde(rename = "childAssignmentRelPath")]
@@ -153,7 +155,12 @@ struct AssignmentData {
 }
 
 impl AssignmentData {
-    pub fn new_folder(title: &str, relative_paths: &[&str], inline: bool, assignment_text: &str) -> Self {
+    pub fn new_folder(
+        title: &str,
+        relative_paths: &[&str],
+        inline: bool,
+        assignment_text: &str,
+    ) -> Self {
         Self {
             question: None,
             folder: Some(Folder {
@@ -165,9 +172,8 @@ impl AssignmentData {
                     })
                     .collect(),
                 display_inline: inline,
-                description_file: (!assignment_text.is_empty()).then(|| {
-                    "assignment_description.md".to_string()
-                }),
+                description_file: (!assignment_text.is_empty())
+                    .then(|| "assignment_description.md".to_string()),
             }),
         }
     }
@@ -231,8 +237,9 @@ impl AssignmentData {
                     .iter()
                     .map(|i| Alternative {
                         text: i.text,
-                        correct: i.is_correct
-                    }).collect(),
+                        correct: i.is_correct,
+                    })
+                    .collect(),
 
                 ..Default::default()
             }),
@@ -240,9 +247,7 @@ impl AssignmentData {
         }
     }
 
-    pub fn new_open(
-        title: &str,
-    ) -> Self {
+    pub fn new_open(title: &str) -> Self {
         Self {
             question: Some(Question {
                 r#type: "EssayQuestion".to_string(),
@@ -353,7 +358,11 @@ fn write_and_fmt<P: AsRef<Path>, S: ToString>(path: P, code: S) -> io::Result<()
 
 fn generate_folder_internal(
     path: impl AsRef<Path>,
-    WeblabFolder { title, assignment_text, assignments }: &WeblabFolder,
+    WeblabFolder {
+        title,
+        assignment_text,
+        assignments,
+    }: &WeblabFolder,
     inline: bool,
 ) -> Result<(), Box<dyn Error>> {
     let p = path.as_ref().to_path_buf().join(sanitize(title));
@@ -381,24 +390,23 @@ fn generate_folder_internal(
     Ok(())
 }
 
-
 fn recursive_generate_folder(
     path: impl AsRef<Path>,
     assignment: &WeblabAssignment,
 ) -> Result<(), Box<dyn Error>> {
     match assignment {
         WeblabAssignment::Programming(ProgrammingAssignment {
-                                          title,
-                                          assignment_text,
-                                          mut library_visible,
-                                          spectest_stdout_visible: _,
-                                          test,
-                                          solution,
-                                          library,
-                                          test_template,
-                                          solution_template,
-                                          checklist: _,
-                                      }) => {
+            title,
+            assignment_text,
+            mut library_visible,
+            spectest_stdout_visible: _,
+            test,
+            solution,
+            library,
+            test_template,
+            solution_template,
+            checklist: _,
+        }) => {
             let p = &(*path.as_ref()).to_path_buf().join(&sanitize(title));
             std::fs::create_dir_all(&p)?;
 
@@ -427,7 +435,12 @@ fn recursive_generate_folder(
             ))?;
             f.write_all(s.as_bytes())?;
         }
-        WeblabAssignment::Open(OpenQuestion { title, assignment_text, expected_answer, .. }) => {
+        WeblabAssignment::Open(OpenQuestion {
+            title,
+            assignment_text,
+            expected_answer,
+            ..
+        }) => {
             let p = &(*path.as_ref()).to_path_buf().join(&sanitize(title));
             std::fs::create_dir_all(&p)?;
 
@@ -437,40 +450,46 @@ fn recursive_generate_folder(
             let mut f = File::create(p.join("question.md"))?;
             f.write_all(assignment_text.as_bytes())?;
 
-
             let mut f = File::create(p.join("assignment-data.json"))?;
-            let s = serde_json::to_string_pretty(&AssignmentData::new_open(
-                title,
-            ))?;
+            let s = serde_json::to_string_pretty(&AssignmentData::new_open(title))?;
             f.write_all(s.as_bytes())?;
         }
-        WeblabAssignment::MultipleChoice(MCQuestion { title, assignment_text, options, randomize, style }) => {
+        WeblabAssignment::MultipleChoice(MCQuestion {
+            title,
+            assignment_text,
+            options,
+            randomize,
+            style,
+        }) => {
             let p = &(*path.as_ref()).to_path_buf().join(&sanitize(title));
             std::fs::create_dir_all(&p)?;
 
             let mut f = File::create(p.join("question.md"))?;
             f.write_all(assignment_text.as_bytes())?;
 
-
             let mut f = File::create(p.join("assignment-data.json"))?;
             let s = serde_json::to_string_pretty(&AssignmentData::new_mc(
-                title,
-                "",
-                *randomize,
-                *style,
-                *options,
+                title, "", *randomize, *style, *options,
             ))?;
             f.write_all(s.as_bytes())?;
         }
         WeblabAssignment::Folder(wf) => {
             generate_folder_internal(path, wf, false)?;
         }
-        WeblabAssignment::InlineQuestionList(InlineQuestionList { title, assignment_text, assignments }) => {
-            generate_folder_internal(path, &WeblabFolder {
-                title,
-                assignment_text,
-                assignments,
-            }, true)?;
+        WeblabAssignment::InlineQuestionList(InlineQuestionList {
+            title,
+            assignment_text,
+            assignments,
+        }) => {
+            generate_folder_internal(
+                path,
+                &WeblabFolder {
+                    title,
+                    assignment_text,
+                    assignments,
+                },
+                true,
+            )?;
         }
     }
 
@@ -512,13 +531,17 @@ fn check_assignment_tree(assignment: &WeblabAssignment) -> Result<(), Box<dyn Er
         WeblabAssignment::Open(_) => {}
         WeblabAssignment::MultipleChoice(_) => {}
         WeblabAssignment::Folder(WeblabFolder {
-                                     title,
-                                     assignments,
-                                     assignment_text: _,
-                                 }) => {
+            title,
+            assignments,
+            assignment_text: _,
+        }) => {
             check_folder(title, assignments)?;
         }
-        WeblabAssignment::InlineQuestionList(InlineQuestionList { title, assignment_text: _, assignments }) => {
+        WeblabAssignment::InlineQuestionList(InlineQuestionList {
+            title,
+            assignment_text: _,
+            assignments,
+        }) => {
             check_folder(title, assignments)?;
         }
     }

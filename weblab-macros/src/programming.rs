@@ -1,8 +1,8 @@
+use crate::{parse_attr, Attr, FindAnnotated, ParseAttrStatus};
 use proc_macro::TokenStream;
-use std::mem;
 use quote::quote;
+use std::mem;
 use syn::fold::Fold;
-use crate::{Attr, FindAnnotated, parse_attr, ParseAttrStatus};
 use syn::ItemMod;
 
 pub fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> TokenStream {

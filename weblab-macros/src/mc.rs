@@ -1,6 +1,6 @@
+use crate::open::DocString;
 use syn::parse::{Parse, ParseStream};
 use syn::{Ident, LitInt, LitStr, Token};
-use crate::open::DocString;
 
 pub struct McAnswer {
     pub text: String,
@@ -35,17 +35,17 @@ impl Parse for McQuestion {
                     if input.peek(Ident) {
                         let correct_ident = input.parse::<Ident>()?;
                         if correct_ident != "correct" {
-                            return Err(syn::Error::new(correct_ident.span(), "expected either the ident `correct` or nothing here"));
+                            return Err(syn::Error::new(
+                                correct_ident.span(),
+                                "expected either the ident `correct` or nothing here",
+                            ));
                         }
                         correct = true;
                     }
 
                     let _comma = input.parse::<Token!(,)>()?;
 
-                    res.options.push(McAnswer {
-                        text,
-                        correct,
-                    })
+                    res.options.push(McAnswer { text, correct })
                 }
                 "randomize" => {
                     res.randomize = true;
@@ -62,14 +62,22 @@ impl Parse for McQuestion {
 
                     let answers = input.parse::<Ident>()?;
                     if answers != "answers" {
-                        return Err(syn::Error::new(field.span(), "expected the word answers here"))
+                        return Err(syn::Error::new(
+                            field.span(),
+                            "expected the word answers here",
+                        ));
                     }
                 }
                 "question" => {
                     let _colon: Token!(:) = input.parse()?;
                     res.question_text = input.parse()?
                 }
-                n => return Err(syn::Error::new(field.span(), format!("unexpected field name {}", n)))
+                n => {
+                    return Err(syn::Error::new(
+                        field.span(),
+                        format!("unexpected field name {}", n),
+                    ))
+                }
             }
 
             if input.peek(Token!(,)) {

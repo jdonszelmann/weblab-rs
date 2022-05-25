@@ -1,11 +1,11 @@
 use quote::ToTokens;
 use syn::parse::{Parse, ParseStream};
-use syn::{Attribute, Lit, Meta, MetaNameValue,Token, Ident, LitStr};
 use syn::spanned::Spanned;
+use syn::{Attribute, Ident, Lit, LitStr, Meta, MetaNameValue, Token};
 
 #[derive(Default)]
 pub struct DocString {
-    pub text: String
+    pub text: String,
 }
 
 impl ToTokens for DocString {
@@ -22,7 +22,7 @@ impl Parse for DocString {
         for i in attrs {
             let meta = i.parse_meta()?;
             match meta {
-                Meta::NameValue(MetaNameValue { path, lit , ..}) if path.is_ident("doc") => {
+                Meta::NameValue(MetaNameValue { path, lit, .. }) if path.is_ident("doc") => {
                     match lit {
                         Lit::Str(val) => {
                             if !text.is_empty() {
@@ -31,16 +31,16 @@ impl Parse for DocString {
 
                             text.push_str(val.value().as_str())
                         }
-                        _ => return Err(syn::Error::new(lit.span(), "expected string literal here"))
+                        _ => {
+                            return Err(syn::Error::new(lit.span(), "expected string literal here"))
+                        }
                     }
                 }
                 _ => return Err(syn::Error::new(meta.span(), "expected doc=\"...\" here")),
             }
         }
 
-        Ok(Self {
-            text
-        })
+        Ok(Self { text })
     }
 }
 
@@ -55,7 +55,7 @@ impl Parse for OpenQuestion {
         let mut res = Self {
             title: String::new(),
             question_text: Default::default(),
-            answer: Default::default()
+            answer: Default::default(),
         };
 
         while !input.is_empty() {
@@ -65,7 +65,12 @@ impl Parse for OpenQuestion {
                 "title" => res.title = input.parse::<LitStr>()?.value(),
                 "question" => res.question_text = input.parse()?,
                 "answer" => res.question_text = input.parse()?,
-                n => return Err(syn::Error::new(field.span(), format!("unexpected field name {}", n)))
+                n => {
+                    return Err(syn::Error::new(
+                        field.span(),
+                        format!("unexpected field name {}", n),
+                    ))
+                }
             }
 
             if input.peek(Token!(,)) {

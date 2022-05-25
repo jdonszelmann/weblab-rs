@@ -1,8 +1,8 @@
-use proc_macro2::TokenStream;
-use quote::{quote, TokenStreamExt, ToTokens};
-use syn::parse::{Parse, ParseStream};
-use syn::{Macro, Ident, LitStr, Token};
 use crate::open::DocString;
+use proc_macro2::TokenStream;
+use quote::{quote, ToTokens, TokenStreamExt};
+use syn::parse::{Parse, ParseStream};
+use syn::{Ident, LitStr, Macro, Token};
 
 pub struct MacroWrapper(pub Macro);
 impl Parse for MacroWrapper {
@@ -12,7 +12,12 @@ impl Parse for MacroWrapper {
 }
 impl ToTokens for MacroWrapper {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let Macro{ path, bang_token, delimiter: _, tokens : m_tokens} = &self.0;
+        let Macro {
+            path,
+            bang_token,
+            delimiter: _,
+            tokens: m_tokens,
+        } = &self.0;
 
         tokens.append_all(quote! {#path #bang_token (#m_tokens)});
     }
@@ -37,7 +42,7 @@ impl Parse for InlineQuestionList {
             if input.peek2(Token!(!)) {
                 let m = input.parse()?;
                 res.questions.push(m);
-                continue
+                continue;
             }
 
             let field: Ident = input.parse()?;
@@ -46,12 +51,17 @@ impl Parse for InlineQuestionList {
                 "title" => {
                     let _colon: Token!(:) = input.parse()?;
                     res.title = input.parse::<LitStr>()?.value()
-                },
+                }
                 "question" => {
                     let _colon: Token!(:) = input.parse()?;
                     res.question_text = input.parse()?
-                },
-                n => return Err(syn::Error::new(field.span(), format!("unexpected field name {}", n)))
+                }
+                n => {
+                    return Err(syn::Error::new(
+                        field.span(),
+                        format!("unexpected field name {}", n),
+                    ))
+                }
             }
 
             if input.peek(Token!(,)) {

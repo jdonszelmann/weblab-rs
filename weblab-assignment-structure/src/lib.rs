@@ -37,7 +37,6 @@ pub struct OpenQuestion {
     pub checklist: Option<Checklist>,
 }
 
-
 pub struct InlineQuestionList {
     pub title: &'static str,
 
@@ -59,7 +58,7 @@ pub enum MCStyle {
 
 impl Default for MCStyle {
     fn default() -> Self {
-       Self::NumCorrect(1)
+        Self::NumCorrect(1)
     }
 }
 
@@ -87,24 +86,26 @@ impl WeblabAssignment {
             WeblabAssignment::Open(OpenQuestion { title, .. }) => title,
             WeblabAssignment::MultipleChoice(MCQuestion { title, .. }) => title,
             WeblabAssignment::Folder(WeblabFolder { title, .. }) => title,
-            WeblabAssignment::InlineQuestionList(InlineQuestionList { title, .. }) => title
+            WeblabAssignment::InlineQuestionList(InlineQuestionList { title, .. }) => title,
         }
     }
     pub fn assignment_text(&self) -> &str {
         match self {
             WeblabAssignment::Programming(ProgrammingAssignment {
-                                              assignment_text, ..
-                                          }) => assignment_text,
+                assignment_text, ..
+            }) => assignment_text,
             WeblabAssignment::Open(OpenQuestion {
-                                       assignment_text, ..
-                                   }) => assignment_text,
+                assignment_text, ..
+            }) => assignment_text,
             WeblabAssignment::MultipleChoice(MCQuestion {
-                                                 assignment_text, ..
-                                             }) => assignment_text,
+                assignment_text, ..
+            }) => assignment_text,
             WeblabAssignment::Folder(WeblabFolder {
-                                         assignment_text, ..
-                                     }) => assignment_text,
-            WeblabAssignment::InlineQuestionList(InlineQuestionList { assignment_text, .. }) => assignment_text
+                assignment_text, ..
+            }) => assignment_text,
+            WeblabAssignment::InlineQuestionList(InlineQuestionList {
+                assignment_text, ..
+            }) => assignment_text,
         }
     }
 }

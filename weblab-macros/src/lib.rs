@@ -1,21 +1,20 @@
-use crate::attr::{Attr, parse_attr, parse_attr_stream, ParseAttrStatus};
+use crate::attr::{parse_attr, parse_attr_stream, Attr, ParseAttrStatus};
+use crate::inline_question_list::InlineQuestionList;
 use crate::Attr::{Solution, SolutionTemplate};
+use fold_programming_input::FindAnnotated;
+use mc::McQuestion;
+use open::OpenQuestion;
 use proc_macro::{Span, TokenStream};
 use proc_macro2::Span as Span2;
 use quote::{format_ident, quote};
 use syn::parse_macro_input;
-use open::OpenQuestion;
-use mc::McQuestion;
-use fold_programming_input::FindAnnotated;
-use crate::inline_question_list::InlineQuestionList;
 
 mod attr;
+mod fold_programming_input;
+mod inline_question_list;
 mod mc;
 mod open;
 mod programming;
-mod fold_programming_input;
-mod inline_question_list;
-
 
 const ALLOWED_CRATES: &[&str] = [
     "serde",
@@ -38,18 +37,21 @@ const ALLOWED_CRATES: &[&str] = [
     "alloc",
     "test",
 ]
-    .as_slice();
-
+.as_slice();
 
 #[proc_macro]
 pub fn inline_question_list(item: TokenStream) -> TokenStream {
     let InlineQuestionList {
-        title, question_text, questions
+        title,
+        question_text,
+        questions,
     } = parse_macro_input!(item as InlineQuestionList);
 
-    let assignment_names = questions.iter().enumerate().map(|(num, _)| {
-        format_ident!("__INLINE_ASSIGNMENT_{num}")
-    }).collect::<Vec<_>>();
+    let assignment_names = questions
+        .iter()
+        .enumerate()
+        .map(|(num, _)| format_ident!("__INLINE_ASSIGNMENT_{num}"))
+        .collect::<Vec<_>>();
 
     quote! {
         pub mod __WEBLAB_ASSIGNMENT_METADATA {
@@ -78,18 +80,19 @@ pub fn inline_question_list(item: TokenStream) -> TokenStream {
     }.into()
 }
 
-
 #[proc_macro]
 pub fn open_question(item: TokenStream) -> TokenStream {
-    let OpenQuestion{
-        title, question_text, answer
+    let OpenQuestion {
+        title,
+        question_text,
+        answer,
     } = parse_macro_input!(item as OpenQuestion);
 
     if title.is_empty() {
-        return quote!{compile_error!("expected title");}.into()
+        return quote! {compile_error!("expected title");}.into();
     }
     if question_text.text.is_empty() {
-        return quote!{compile_error!("expected question");}.into()
+        return quote! {compile_error!("expected question");}.into();
     }
 
     quote! {
@@ -105,34 +108,39 @@ pub fn open_question(item: TokenStream) -> TokenStream {
                 checklist: None,
             });
         }
-    }.into()
-
+    }
+    .into()
 }
 
 #[proc_macro]
 pub fn mc_question(item: TokenStream) -> TokenStream {
     let McQuestion {
-        title, question_text, options, num_answers_expected, randomize
+        title,
+        question_text,
+        options,
+        num_answers_expected,
+        randomize,
     } = parse_macro_input!(item as McQuestion);
 
     let answers: Vec<_> = options.iter().map(|i| i.text.clone()).collect();
     let corrects: Vec<_> = options.iter().map(|i| i.correct).collect();
 
     if question_text.text.is_empty() {
-        return quote!{compile_error!("expected question text");}.into()
+        return quote! {compile_error!("expected question text");}.into();
     }
     if title.is_empty() {
-        return quote!{compile_error!("expected title");}.into()
+        return quote! {compile_error!("expected title");}.into();
     }
     if answers.is_empty() {
-        return quote!{compile_error!("expected at least one option (using `option \"text\"`)");}.into()
+        return quote! {compile_error!("expected at least one option (using `option \"text\"`)");}
+            .into();
     }
     if !corrects.iter().any(|i| *i) {
-        return quote!{compile_error!("expected at least one option marked as correct (using `option \"text\" correct`)");}.into()
+        return quote!{compile_error!("expected at least one option marked as correct (using `option \"text\" correct`)");}.into();
     }
     if num_answers_expected > answers.len() {
         let text = format!("you marked this question as requiring {num_answers_expected} but there are only {} options", answers.len());
-        return quote!{compile_error!(#text);}.into()
+        return quote! {compile_error!(#text);}.into();
     }
 
     let style = if num_answers_expected == 0 {
@@ -161,9 +169,7 @@ pub fn mc_question(item: TokenStream) -> TokenStream {
             });
         }
     }.into()
-
 }
-
 
 #[proc_macro_attribute]
 pub fn weblab(attr: TokenStream, item: TokenStream) -> TokenStream {

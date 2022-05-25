@@ -1,9 +1,13 @@
-use syn::fold::{Fold, fold_item};
-use syn::{Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro, ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion, ItemUse, Macro, MacroDelimiter, UseGroup, UseName, UsePath, UseRename, UseTree};
-use syn::spanned::Spanned;
+use crate::{parse_attr, Attr, ParseAttrStatus, Solution, SolutionTemplate, ALLOWED_CRATES};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote_spanned, ToTokens};
-use crate::{ALLOWED_CRATES, Attr, parse_attr, ParseAttrStatus, Solution, SolutionTemplate};
+use syn::fold::{fold_item, Fold};
+use syn::spanned::Spanned;
+use syn::{
+    Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro,
+    ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion,
+    ItemUse, Macro, MacroDelimiter, UseGroup, UseName, UsePath, UseRename, UseTree,
+};
 
 pub enum FindAnnotated {
     Template {
@@ -341,5 +345,3 @@ fn should_drop(t: &UseTree) -> Result<bool, String> {
         }
     }
 }
-
-
