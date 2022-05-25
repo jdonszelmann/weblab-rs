@@ -62,14 +62,14 @@ impl Parse for McQuestion {
 
                     let answers = input.parse::<Ident>()?;
                     if answers != "answers" {
-                        return Err(syn::Error::new(field.span().into(), "expected the word answers here"))
+                        return Err(syn::Error::new(field.span(), "expected the word answers here"))
                     }
                 }
                 "question" => {
                     let _colon: Token!(:) = input.parse()?;
                     res.question_text = input.parse()?
                 }
-                n => return Err(syn::Error::new(field.span().into(), format!("unexpected field name {}", n)))
+                n => return Err(syn::Error::new(field.span(), format!("unexpected field name {}", n)))
             }
 
             if input.peek(Token!(,)) {

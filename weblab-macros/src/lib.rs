@@ -116,7 +116,7 @@ pub fn mc_question(item: TokenStream) -> TokenStream {
     } = parse_macro_input!(item as McQuestion);
 
     let answers: Vec<_> = options.iter().map(|i| i.text.clone()).collect();
-    let corrects: Vec<_> = options.iter().map(|i| i.correct.clone()).collect();
+    let corrects: Vec<_> = options.iter().map(|i| i.correct).collect();
 
     if question_text.text.is_empty() {
         return quote!{compile_error!("expected question text");}.into()

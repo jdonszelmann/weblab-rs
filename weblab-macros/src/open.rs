@@ -31,10 +31,10 @@ impl Parse for DocString {
 
                             text.push_str(val.value().as_str())
                         }
-                        _ => return Err(syn::Error::new(lit.span(), format!("expected string literal here")))
+                        _ => return Err(syn::Error::new(lit.span(), "expected string literal here"))
                     }
                 }
-                _ => return Err(syn::Error::new(meta.span(), format!("expected doc=\"...\" here"))),
+                _ => return Err(syn::Error::new(meta.span(), "expected doc=\"...\" here")),
             }
         }
 
@@ -65,7 +65,7 @@ impl Parse for OpenQuestion {
                 "title" => res.title = input.parse::<LitStr>()?.value(),
                 "question" => res.question_text = input.parse()?,
                 "answer" => res.question_text = input.parse()?,
-                n => return Err(syn::Error::new(field.span().into(), format!("unexpected field name {}", n)))
+                n => return Err(syn::Error::new(field.span(), format!("unexpected field name {}", n)))
             }
 
             if input.peek(Token!(,)) {

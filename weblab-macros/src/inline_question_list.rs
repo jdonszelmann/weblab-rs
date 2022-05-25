@@ -51,7 +51,7 @@ impl Parse for InlineQuestionList {
                     let _colon: Token!(:) = input.parse()?;
                     res.question_text = input.parse()?
                 },
-                n => return Err(syn::Error::new(field.span().into(), format!("unexpected field name {}", n)))
+                n => return Err(syn::Error::new(field.span(), format!("unexpected field name {}", n)))
             }
 
             if input.peek(Token!(,)) {

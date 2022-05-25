@@ -1,4 +1,4 @@
-use weblab::{inline_question_list};
+use weblab::inline_question_list;
 
 inline_question_list! {
     title: "example of inline question list",
