@@ -120,6 +120,7 @@ pub fn mc_question(item: TokenStream) -> TokenStream {
         options,
         num_answers_expected,
         randomize,
+        explanation,
     } = parse_macro_input!(item as McQuestion);
 
     let answers: Vec<_> = options.iter().map(|i| i.text.clone()).collect();
@@ -157,6 +158,7 @@ pub fn mc_question(item: TokenStream) -> TokenStream {
                 title: #title,
 
                 assignment_text: #question_text,
+                explanation: #explanation,
 
                 options: &[#(
                     MCOption {

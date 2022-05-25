@@ -13,6 +13,7 @@ pub struct McQuestion {
     pub options: Vec<McAnswer>,
     pub num_answers_expected: usize,
     pub randomize: bool,
+    pub explanation: DocString,
 }
 
 impl Parse for McQuestion {
@@ -23,6 +24,7 @@ impl Parse for McQuestion {
             options: vec![],
             num_answers_expected: 1,
             randomize: false,
+            explanation: Default::default()
         };
 
         while !input.is_empty() {
@@ -46,6 +48,11 @@ impl Parse for McQuestion {
                     let _comma = input.parse::<Token!(,)>()?;
 
                     res.options.push(McAnswer { text, correct })
+                }
+                "explanation" => {
+                    let _colon: Token!(:) = input.parse()?;
+                    res.explanation = input.parse()?
+
                 }
                 "randomize" => {
                     res.randomize = true;

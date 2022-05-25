@@ -69,6 +69,7 @@ pub struct MCQuestion {
     pub options: &'static [MCOption],
     pub randomize: bool,
     pub style: MCStyle,
+    pub explanation: &'static str,
 }
 
 pub enum WeblabAssignment {

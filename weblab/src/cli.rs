@@ -460,6 +460,7 @@ fn recursive_generate_folder(
             options,
             randomize,
             style,
+            explanation,
         }) => {
             let p = &(*path.as_ref()).to_path_buf().join(&sanitize(title));
             std::fs::create_dir_all(&p)?;
@@ -469,7 +470,7 @@ fn recursive_generate_folder(
 
             let mut f = File::create(p.join("assignment-data.json"))?;
             let s = serde_json::to_string_pretty(&AssignmentData::new_mc(
-                title, "", *randomize, *style, *options,
+                title, explanation, *randomize, *style, *options,
             ))?;
             f.write_all(s.as_bytes())?;
         }
