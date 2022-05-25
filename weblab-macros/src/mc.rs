@@ -24,7 +24,7 @@ impl Parse for McQuestion {
             options: vec![],
             num_answers_expected: 1,
             randomize: false,
-            explanation: Default::default()
+            explanation: Default::default(),
         };
 
         while !input.is_empty() {
@@ -52,7 +52,6 @@ impl Parse for McQuestion {
                 "explanation" => {
                     let _colon: Token!(:) = input.parse()?;
                     res.explanation = input.parse()?
-
                 }
                 "randomize" => {
                     res.randomize = true;
