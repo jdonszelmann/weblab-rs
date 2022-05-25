@@ -18,6 +18,12 @@ pub struct ProgrammingAssignment {
     pub checklist: Option<Checklist>,
 }
 
+pub struct WeblabFolder {
+    pub title: &'static str,
+    pub assignment_text: &'static str,
+    pub assignments: &'static [WeblabAssignment],
+}
+
 pub struct Checklist {
     pub items: Vec<&'static str>,
 }
@@ -31,12 +37,38 @@ pub struct OpenQuestion {
     pub checklist: Option<Checklist>,
 }
 
+pub struct InlineQuestionList {
+    pub title: &'static str,
+
+    pub assignment_text: &'static str,
+
+    pub assignments: &'static [WeblabAssignment],
+}
+
+pub struct MCOption {
+    pub text: &'static str,
+    pub is_correct: bool,
+}
+
+#[derive(Copy, Clone)]
+pub enum MCStyle {
+    AllThatApply,
+    NumCorrect(usize),
+}
+
+impl Default for MCStyle {
+    fn default() -> Self {
+        Self::NumCorrect(1)
+    }
+}
+
 pub struct MCQuestion {
     pub title: &'static str,
     pub assignment_text: &'static str,
 
-    pub options: Vec<&'static str>,
-    pub answer: usize,
+    pub options: &'static [MCOption],
+    pub randomize: bool,
+    pub style: MCStyle,
 }
 
 pub enum WeblabAssignment {
@@ -44,6 +76,7 @@ pub enum WeblabAssignment {
     Open(OpenQuestion),
     MultipleChoice(MCQuestion),
     Folder(WeblabFolder),
+    InlineQuestionList(InlineQuestionList),
 }
 
 impl WeblabAssignment {
@@ -53,6 +86,7 @@ impl WeblabAssignment {
             WeblabAssignment::Open(OpenQuestion { title, .. }) => title,
             WeblabAssignment::MultipleChoice(MCQuestion { title, .. }) => title,
             WeblabAssignment::Folder(WeblabFolder { title, .. }) => title,
+            WeblabAssignment::InlineQuestionList(InlineQuestionList { title, .. }) => title,
         }
     }
     pub fn assignment_text(&self) -> &str {
@@ -69,12 +103,9 @@ impl WeblabAssignment {
             WeblabAssignment::Folder(WeblabFolder {
                 assignment_text, ..
             }) => assignment_text,
+            WeblabAssignment::InlineQuestionList(InlineQuestionList {
+                assignment_text, ..
+            }) => assignment_text,
         }
     }
-}
-
-pub struct WeblabFolder {
-    pub title: &'static str,
-    pub assignment_text: &'static str,
-    pub assignments: &'static [WeblabAssignment],
 }

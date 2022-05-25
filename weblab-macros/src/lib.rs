@@ -1,19 +1,20 @@
 use crate::attr::{parse_attr, parse_attr_stream, Attr, ParseAttrStatus};
+use crate::inline_question_list::InlineQuestionList;
 use crate::Attr::{Solution, SolutionTemplate};
+use fold_programming_input::FindAnnotated;
+use mc::McQuestion;
+use open::OpenQuestion;
 use proc_macro::{Span, TokenStream};
 use proc_macro2::Span as Span2;
-use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, quote_spanned, ToTokens};
-use std::mem;
-use syn::fold::{fold_item, Fold};
-use syn::spanned::Spanned;
-use syn::{
-    Item, ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro,
-    ItemMacro2, ItemMod, ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion,
-    ItemUse, Macro, MacroDelimiter, UseGroup, UseName, UsePath, UseRename, UseTree,
-};
+use quote::{format_ident, quote};
+use syn::parse_macro_input;
 
 mod attr;
+mod fold_programming_input;
+mod inline_question_list;
+mod mc;
+mod open;
+mod programming;
 
 const ALLOWED_CRATES: &[&str] = [
     "serde",
@@ -31,474 +32,143 @@ const ALLOWED_CRATES: &[&str] = [
     "petgraph",
     "quickcheck",
     "quickcheck_macros",
+    "std",
+    "core",
+    "alloc",
+    "test",
 ]
 .as_slice();
 
 #[proc_macro]
-pub fn open_question(_item: TokenStream) -> TokenStream {
-    "".parse().unwrap()
-}
+pub fn inline_question_list(item: TokenStream) -> TokenStream {
+    let InlineQuestionList {
+        title,
+        question_text,
+        questions,
+    } = parse_macro_input!(item as InlineQuestionList);
 
-#[proc_macro]
-pub fn mc_question(_item: TokenStream) -> TokenStream {
-    "".parse().unwrap()
-}
-
-fn process_programming_assignment(attributes: &[Attr], item: TokenStream) -> TokenStream {
-    let mut attrs = attributes.to_vec();
-    let mut non_parsed_attrs = Vec::new();
-
-    let mut module = syn::parse_macro_input!(item as ItemMod);
-
-    let module_attrs = mem::take(&mut module.attrs);
-    for i in module_attrs {
-        match parse_attr(i) {
-            Ok(ParseAttrStatus::Attr(i)) => attrs.extend(i),
-            Ok(ParseAttrStatus::Doc(i, a)) => {
-                attrs.push(i);
-                non_parsed_attrs.push(a);
-            }
-            Ok(ParseAttrStatus::NotParsed(a)) => {
-                non_parsed_attrs.push(a);
-            }
-            Err(e) => return e,
-        }
-    }
-
-    let mut reference = FindAnnotated::reference();
-    let mut template = FindAnnotated::template();
-
-    let reference_modified = reference.fold_item_mod(module.clone());
-    let _ = template.fold_item_mod(module); // for side effects
-
-    let mut title = reference_modified.ident.to_string();
-    let mut num_titles = 0;
-    for i in &attrs {
-        if let Attr::Title(x) = i {
-            title = x.clone();
-            num_titles += 1;
-        }
-    }
-
-    if num_titles > 1 {
-        return quote! {
-            compile_error!("assignment has more than one title");
-        }
-        .into();
-    }
-
-    let spectest = if let Some(i) = reference.test().map(|i| quote! {#(#i)*}.to_string()) {
-        i
-    } else {
-        return quote! {
-            compile_error!("assignment has no spectest");
-        }
-        .into();
-    };
-    let testtemplate = template
-        .test()
-        .map(|i| quote! {#(#i)*}.to_string())
-        .unwrap_or_else(|| "".to_string());
-    let referencesolution =
-        if let Some(i) = reference.solution().map(|i| quote! {#(#i)*}.to_string()) {
-            i
-        } else {
-            return quote! {
-                compile_error!("assignment has no reference solution");
-            }
-            .into();
-        };
-    let solutiontemplate = template
-        .solution()
-        .map(|i| quote! {#(#i)*}.to_string())
-        .unwrap_or_else(|| "".to_string());
-    let library = if let Some(i) = template.library().map(|i| quote! {#(#i)*}.to_string()) {
-        quote! {
-            Some(#i)
-        }
-    } else {
-        quote! {
-            None
-        }
-    };
-
-    let assignment_text = attrs
+    let assignment_names = questions
         .iter()
-        .filter_map(|x| {
-            if let Attr::Doc(i) = x {
-                Some(i.as_str())
-            } else {
-                None
-            }
-        })
-        .map(|i| i.trim())
-        .collect::<Vec<_>>()
-        .join("\n");
+        .enumerate()
+        .map(|(num, _)| format_ident!("__INLINE_ASSIGNMENT_{num}"))
+        .collect::<Vec<_>>();
 
     quote! {
         pub mod __WEBLAB_ASSIGNMENT_METADATA {
             use weblab::*;
 
-            pub const ASSIGNMENT_INFO: WeblabAssignment = WeblabAssignment::Programming(ProgrammingAssignment {
+            pub const ASSIGNMENT_INFO: WeblabAssignment = WeblabAssignment::InlineQuestionList(InlineQuestionList {
+                title: #title,
+                assignment_text: #question_text,
+                assignments: &[#(
+                    {
+                        use super::*;
+                        use #assignment_names as weblab_module;
+
+                        weblab_module::__WEBLAB_ASSIGNMENT_METADATA::ASSIGNMENT_INFO
+                    }
+                ),*]
+            });
+        }
+
+        #(
+            pub mod #assignment_names {
+                use weblab::{mc_question, open_question};
+                #questions;
+            }
+        )*
+    }.into()
+}
+
+#[proc_macro]
+pub fn open_question(item: TokenStream) -> TokenStream {
+    let OpenQuestion {
+        title,
+        question_text,
+        answer,
+    } = parse_macro_input!(item as OpenQuestion);
+
+    if title.is_empty() {
+        return quote! {compile_error!("expected title");}.into();
+    }
+    if question_text.text.is_empty() {
+        return quote! {compile_error!("expected question");}.into();
+    }
+
+    quote! {
+        pub mod __WEBLAB_ASSIGNMENT_METADATA {
+            use weblab::*;
+
+            pub const ASSIGNMENT_INFO: WeblabAssignment = WeblabAssignment::Open(OpenQuestion {
                 title: #title,
 
-                assignment_text: #assignment_text,
-
-                library_visible: false,
-                spectest_stdout_visible: false,
-
-                test: #spectest,
-                solution: #referencesolution,
-
-                library: #library,
-                test_template: #testtemplate,
-                solution_template: #solutiontemplate,
+                assignment_text: #question_text,
+                expected_answer: #answer,
 
                 checklist: None,
             });
         }
+    }
+    .into()
+}
 
-        #[allow(unused_imports)]
-        #[allow(dead_code)]
-        #reference_modified
+#[proc_macro]
+pub fn mc_question(item: TokenStream) -> TokenStream {
+    let McQuestion {
+        title,
+        question_text,
+        options,
+        num_answers_expected,
+        randomize,
+    } = parse_macro_input!(item as McQuestion);
+
+    let answers: Vec<_> = options.iter().map(|i| i.text.clone()).collect();
+    let corrects: Vec<_> = options.iter().map(|i| i.correct).collect();
+
+    if question_text.text.is_empty() {
+        return quote! {compile_error!("expected question text");}.into();
+    }
+    if title.is_empty() {
+        return quote! {compile_error!("expected title");}.into();
+    }
+    if answers.is_empty() {
+        return quote! {compile_error!("expected at least one option (using `option \"text\"`)");}
+            .into();
+    }
+    if !corrects.iter().any(|i| *i) {
+        return quote!{compile_error!("expected at least one option marked as correct (using `option \"text\" correct`)");}.into();
+    }
+    if num_answers_expected > answers.len() {
+        let text = format!("you marked this question as requiring {num_answers_expected} but there are only {} options", answers.len());
+        return quote! {compile_error!(#text);}.into();
+    }
+
+    let style = if num_answers_expected == 0 {
+        quote! {MCStyle::AllThatApply}
+    } else {
+        quote! {MCStyle::NumCorrect(#num_answers_expected)}
+    };
+
+    quote! {
+        pub mod __WEBLAB_ASSIGNMENT_METADATA {
+            use weblab::*;
+
+            pub const ASSIGNMENT_INFO: WeblabAssignment = WeblabAssignment::MultipleChoice(MCQuestion {
+                title: #title,
+
+                assignment_text: #question_text,
+
+                options: &[#(
+                    MCOption {
+                        text: #answers,
+                        is_correct: #corrects
+                    }
+                ),*],
+                randomize: #randomize,
+                style: #style,
+            });
+        }
     }.into()
-}
-
-enum Status {
-    Certain(ItemMod),
-    Maybe(ItemMod),
-    Unkown,
-}
-
-enum FindAnnotated {
-    Template {
-        solution: Status,
-        test: Status,
-        library: Option<ItemMod>,
-    },
-    Reference {
-        solution: Option<ItemMod>,
-        test: Option<ItemMod>,
-    },
-}
-
-impl FindAnnotated {
-    pub fn test(&self) -> Option<Vec<Item>> {
-        match self {
-            FindAnnotated::Template { test, .. } => match test {
-                Status::Certain(i) => i.content.clone().map(|(_, x)| x),
-                Status::Maybe(i) => i.content.clone().map(|(_, x)| x),
-                Status::Unkown => None,
-            },
-            FindAnnotated::Reference { test, .. } => {
-                test.clone().and_then(|i| i.content).map(|(_, x)| x)
-            }
-        }
-    }
-
-    pub fn solution(&self) -> Option<Vec<Item>> {
-        match self {
-            FindAnnotated::Template { solution, .. } => match solution {
-                Status::Certain(i) => i.content.clone().map(|(_, x)| x),
-                Status::Maybe(i) => i.content.clone().map(|(_, x)| x),
-                Status::Unkown => None,
-            },
-            FindAnnotated::Reference { solution, .. } => {
-                solution.clone().and_then(|i| i.content).map(|(_, x)| x)
-            }
-        }
-    }
-
-    pub fn library(&self) -> Option<Vec<Item>> {
-        match self {
-            FindAnnotated::Template { library, .. } => {
-                library.clone().and_then(|i| i.content).map(|(_, x)| x)
-            }
-            FindAnnotated::Reference { .. } => None,
-        }
-    }
-
-    pub fn reference() -> Self {
-        Self::Reference {
-            solution: None,
-            test: None,
-        }
-    }
-
-    pub fn template() -> Self {
-        Self::Template {
-            solution: Status::Unkown,
-            test: Status::Unkown,
-            library: None,
-        }
-    }
-
-    pub fn is_reference(&self) -> bool {
-        match self {
-            FindAnnotated::Template { .. } => false,
-            FindAnnotated::Reference { .. } => true,
-        }
-    }
-
-    pub fn is_template(&self) -> bool {
-        !self.is_reference()
-    }
-}
-
-fn parse_only_contents(t: &TokenStream2) -> Item {
-    // let res: Block = syn::parse2(quote! {"{ #tt }"})?;
-    // Ok(Item)
-    // TODO: parse as block so inner macros get expanded
-    Item::Verbatim(t.to_token_stream())
-}
-
-fn should_drop(t: &UseTree) -> Result<bool, String> {
-    match t {
-        UseTree::Path(UsePath { ident, .. })
-        | UseTree::Name(UseName { ident })
-        | UseTree::Rename(UseRename { ident, .. }) => {
-            if ident == "weblab" {
-                return Ok(true);
-            }
-
-            if ALLOWED_CRATES.contains(&ident.to_string().as_str()) {
-                Ok(false)
-            } else if ident == "crate" {
-                Err("crate-relative imports break on weblab since weblab's generated project structure will be different to this one. Use relative imports (with super)".to_string())
-            } else if ident == "super" {
-                Ok(false)
-            } else {
-                Err(format!(
-                    "{ident} cannot be imported in weblab and is therefore forbidden"
-                ))
-            }
-        }
-        UseTree::Glob(_) => Ok(false),
-        UseTree::Group(UseGroup { items, .. }) => {
-            let res = items
-                .iter()
-                .map(should_drop)
-                .collect::<Result<Vec<_>, _>>()?;
-            if res.iter().all(|i| *i) {
-                Ok(true)
-            } else if res.iter().all(|i| !*i) {
-                Ok(false)
-            } else {
-                Err("can't filter out only parts of this `use` statement. Some parts are not supposed to be shown to students on weblab.".to_string())
-            }
-        }
-    }
-}
-
-struct DropUse;
-
-impl Fold for DropUse {
-    fn fold_item(&mut self, item: Item) -> Item {
-        if let Item::Use(ItemUse { tree, .. }) = &item {
-            match should_drop(tree) {
-                Ok(true) => {
-                    return Item::Verbatim(TokenStream2::new());
-                }
-                Ok(false) => { /* do nothing */ }
-                _ => unreachable!("all errors should have been filtered out by FindAnnotated"),
-            }
-        }
-
-        fold_item(self, item)
-    }
-}
-
-impl Fold for FindAnnotated {
-    fn fold_macro(&mut self, mut i: Macro) -> Macro {
-        const TARGETS: &[&str] = &["template_only", "solution_only"];
-
-        let ident = i
-            .path
-            .segments
-            .last()
-            .expect("no segments in path")
-            .ident
-            .to_string();
-
-        let msg = format!("use braces in {}", ident);
-
-        if !matches!(i.delimiter, MacroDelimiter::Brace(_)) && TARGETS.contains(&ident.as_str()) {
-            i.tokens = quote_spanned! {
-                i.span() =>
-                compile_error!(#msg);
-                todo!()
-            }
-        }
-
-        i
-    }
-
-    fn fold_item(&mut self, mut item: Item) -> Item {
-        let attrs = match &mut item {
-            Item::Const(ItemConst { attrs, .. })
-            | Item::Enum(ItemEnum { attrs, .. })
-            | Item::ExternCrate(ItemExternCrate { attrs, .. })
-            | Item::Fn(ItemFn { attrs, .. })
-            | Item::ForeignMod(ItemForeignMod { attrs, .. })
-            | Item::Impl(ItemImpl { attrs, .. })
-            | Item::Macro(ItemMacro { attrs, .. })
-            | Item::Macro2(ItemMacro2 { attrs, .. })
-            | Item::Mod(ItemMod { attrs, .. })
-            | Item::Static(ItemStatic { attrs, .. })
-            | Item::Struct(ItemStruct { attrs, .. })
-            | Item::Trait(ItemTrait { attrs, .. })
-            | Item::TraitAlias(ItemTraitAlias { attrs, .. })
-            | Item::Type(ItemType { attrs, .. })
-            | Item::Union(ItemUnion { attrs, .. })
-            | Item::Use(ItemUse { attrs, .. }) => {
-                let mut parsed_attrs = Vec::new();
-                let mut non_parsed_attrs = Vec::new();
-
-                for i in attrs.drain(..) {
-                    match parse_attr(i) {
-                        Ok(ParseAttrStatus::Attr(i)) => parsed_attrs.extend(i),
-                        Ok(ParseAttrStatus::Doc(i, a)) => {
-                            parsed_attrs.push(i);
-                            non_parsed_attrs.push(a);
-                        }
-                        Ok(ParseAttrStatus::NotParsed(a)) => {
-                            non_parsed_attrs.push(a);
-                        }
-                        Err(e) => return Item::Verbatim(e.into()),
-                    }
-                }
-
-                *attrs = non_parsed_attrs;
-                parsed_attrs
-            }
-            Item::Verbatim(_ts) => {
-                vec![]
-            }
-            _ => return Item::Verbatim(r#"compile_error!("not implemented")"#.to_token_stream()),
-        };
-
-        if let Item::Macro(ItemMacro { mac, .. }) = &item {
-            if let Some(ident) = mac.path.get_ident() {
-                if ident == "template_only" {
-                    if self.is_reference() {
-                        return Item::Verbatim(TokenStream2::new());
-                    } else {
-                        item = parse_only_contents(&mac.tokens);
-                    }
-                } else if ident == "solution_only" {
-                    if self.is_template() {
-                        return Item::Verbatim(TokenStream2::new());
-                    } else {
-                        item = parse_only_contents(&mac.tokens);
-                    }
-                }
-            }
-        }
-
-        if let Item::Use(ItemUse { tree, .. }) = &item {
-            if let Err(e) = should_drop(tree) {
-                return Item::Verbatim(quote_spanned! {
-                    item.span() =>
-                    compile_error!(#e);
-                });
-            }
-        }
-
-        let folded = fold_item(self, item);
-        let without_use = DropUse.fold_item(folded.clone());
-
-        if let Item::Mod(ref i) = without_use {
-            match self {
-                FindAnnotated::Template {
-                    solution,
-                    test,
-                    library,
-                } => {
-                    if attrs.contains(&SolutionTemplate) {
-                        match solution {
-                            Status::Certain(_) => {
-                                return Item::Verbatim(quote_spanned! {
-                                    i.span() =>
-                                    compile_error!("multiple solution template blocks defined")
-                                });
-                            }
-                            Status::Maybe(_) | Status::Unkown => {
-                                *solution = Status::Certain(i.clone());
-                            }
-                        }
-                    } else if attrs.contains(&Solution) {
-                        match solution {
-                            Status::Certain(_) | Status::Maybe(_) => {
-                                return Item::Verbatim(quote_spanned! {
-                                    i.span() =>
-                                    compile_error!("multiple solution template blocks defined")
-                                });
-                            }
-                            Status::Unkown => {
-                                *solution = Status::Maybe(i.clone());
-                            }
-                        }
-                    } else if attrs.contains(&Attr::TestTemplate) {
-                        match test {
-                            Status::Certain(_) => {
-                                return Item::Verbatim(quote_spanned! {
-                                    i.span() =>
-                                    compile_error!("multiple test template blocks defined")
-                                });
-                            }
-                            Status::Maybe(_) | Status::Unkown => {
-                                *test = Status::Certain(i.clone());
-                            }
-                        }
-                    } else if attrs.contains(&Attr::Test) {
-                        match test {
-                            Status::Certain(_) | Status::Maybe(_) => {
-                                return Item::Verbatim(quote_spanned! {
-                                    i.span() =>
-                                    compile_error!("multiple test template blocks defined")
-                                });
-                            }
-                            Status::Unkown => {
-                                *test = Status::Maybe(i.clone());
-                            }
-                        }
-                    } else if attrs.contains(&Attr::Library) {
-                        if library.is_none() {
-                            *library = Some(i.clone());
-                        } else {
-                            return Item::Verbatim(quote_spanned! {
-                                i.span() =>
-                                compile_error!("multiple library blocks defined")
-                            });
-                        }
-                    }
-                }
-                FindAnnotated::Reference { solution, test } => {
-                    if attrs.contains(&Attr::Solution) {
-                        if solution.is_none() {
-                            *solution = Some(i.clone());
-                        } else {
-                            return Item::Verbatim(quote_spanned! {
-                                i.span() =>
-                                compile_error!("multiple reference solution blocks defined")
-                            });
-                        }
-                    } else if attrs.contains(&Attr::Test) {
-                        if test.is_none() {
-                            *test = Some(i.clone());
-                        } else {
-                            return Item::Verbatim(quote_spanned! {
-                                i.span() =>
-                                compile_error!("multiple spec test blocks defined")
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        folded
-    }
 }
 
 #[proc_macro_attribute]
@@ -509,7 +179,7 @@ pub fn weblab(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     let res = if let Some(Attr::ProgrammingAssignment) = attr.first() {
-        process_programming_assignment(&attr[1..], item)
+        programming::process_programming_assignment(&attr[1..], item)
     } else {
         return syn::Error::new(
             Span::call_site().into(),

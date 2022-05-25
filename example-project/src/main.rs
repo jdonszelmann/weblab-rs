@@ -1,15 +1,19 @@
 use weblab::{weblab_folder, weblab_main};
 
 mod a;
-mod b;
 mod c;
+mod mc_q_example;
+mod open_q_example;
+mod question_list;
 
 weblab_folder! {
     "test",
 
     a,
-    //b
+    open_q_example,
+    mc_q_example,
     c,
+    question_list,
 }
 
 fn main() {
