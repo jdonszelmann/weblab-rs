@@ -1,6 +1,6 @@
 [package]
 name = "weblab"
-version = "0.2.19"
+version = "0.2.20"
 edition = "2021"
 license = "MIT"
 authors = ["Jonathan Dönszelmann <jonabent@gmail.com>"]

@@ -29,7 +29,7 @@ impl Parse for DocString {
                                 text.push('\n');
                             }
 
-                            text.push_str(val.value().as_str())
+                            text.push_str(val.value().as_str().trim_start())
                         }
                         _ => {
                             return Err(syn::Error::new(lit.span(), "expected string literal here"))
@@ -64,7 +64,7 @@ impl Parse for OpenQuestion {
             match field.to_string().as_str() {
                 "title" => res.title = input.parse::<LitStr>()?.value(),
                 "question" => res.question_text = input.parse()?,
-                "answer" => res.question_text = input.parse()?,
+                "answer" => res.answer = input.parse()?,
                 n => {
                     return Err(syn::Error::new(
                         field.span(),
