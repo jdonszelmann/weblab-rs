@@ -11,51 +11,110 @@ use std::path::{Path, PathBuf};
 use std::{fs, io, process};
 use path_slash::PathBufExt;
 use walkdir::WalkDir;
-use weblab_assignment_structure::{ProgrammingAssignment, WeblabAssignment, WeblabFolder};
+use weblab_assignment_structure::{InlineQuestionList, MCOption, MCQuestion, MCStyle, OpenQuestion, ProgrammingAssignment, WeblabAssignment, WeblabFolder};
 use zip::write::FileOptions;
 use zip::ZipWriter;
 
 #[derive(Serialize)]
+pub struct Alternative {
+    #[serde(rename = "text")]
+    pub text: &'static str,
+    #[serde(rename = "correct")]
+    pub correct: bool,
+}
+
+#[derive(Serialize, Default)]
 struct Question {
     #[serde(rename = "type")]
     r#type: String,
 
     #[serde(rename = "language")]
-    language: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    language: Option<String>,
 
     #[serde(rename = "libraryVisible")]
-    library_visible: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    library_visible: Option<bool>,
     #[serde(rename = "programOutputVisible")]
-    program_output_visible: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    program_output_visible: Option<bool>,
     #[serde(rename = "specTestDetailsVisible")]
-    spec_test_details_visible: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    spec_test_details_visible: Option<bool>,
 
     #[serde(rename = "dockerImage")]
-    docker_image: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    docker_image: Option<String>,
 
     #[serde(rename = "editorLanguageId")]
-    editor_language_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    editor_language_id: Option<String>,
     #[serde(rename = "editorTestLanguageId")]
-    editor_test_language_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    editor_test_language_id: Option<String>,
     #[serde(rename = "editorLibraryLanguageId")]
-    editor_library_language_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    editor_library_language_id: Option<String>,
 
     #[serde(rename = "solutionFile")]
-    solution_file: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    solution_file: Option<String>,
     #[serde(rename = "solutionTemplateFile")]
-    solution_template_file: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    solution_template_file: Option<String>,
     #[serde(rename = "specTestFile")]
-    spec_test_file: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    spec_test_file: Option<String>,
     #[serde(rename = "userTestTemplateFile")]
-    user_test_template_file: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    user_test_template_file: Option<String>,
     #[serde(rename = "libraryFile")]
-    library_file: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    library_file: Option<String>,
+    #[serde(rename = "essayAnswerFile")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    essay_answer_file: Option<String>,
 
     #[serde(rename = "questionTextFile")]
     question_text_file: String,
     #[serde(rename = "title")]
     title: String,
+
+    #[serde(rename = "explanation")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    explanation: Option<String>,
+
+    #[serde(rename = "randomOrder")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    random_order: Option<bool>,
+
+    #[serde(rename = "selectN")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    num_answers_expected: Option<usize>,
+
+    #[serde(rename = "alternatives")]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
+    alternatives: Vec<Alternative>,
 }
+
 
 #[derive(Serialize)]
 struct Child {
@@ -70,6 +129,14 @@ struct Folder {
 
     #[serde(rename = "children")]
     children: Vec<Child>,
+
+    #[serde(rename = "displayInline")]
+    display_inline: bool,
+
+    #[serde(rename = "descriptionFile")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    description_file: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -86,7 +153,7 @@ struct AssignmentData {
 }
 
 impl AssignmentData {
-    pub fn new_folder(title: &str, relative_paths: &[&str]) -> Self {
+    pub fn new_folder(title: &str, relative_paths: &[&str], inline: bool, assignment_text: &str) -> Self {
         Self {
             question: None,
             folder: Some(Folder {
@@ -97,6 +164,10 @@ impl AssignmentData {
                         child_assignment_rel_path: i.to_string(),
                     })
                     .collect(),
+                display_inline: inline,
+                description_file: (!assignment_text.is_empty()).then(|| {
+                    "assignment_description.md".to_string()
+                }),
             }),
         }
     }
@@ -110,24 +181,77 @@ impl AssignmentData {
         Self {
             question: Some(Question {
                 r#type: "ProgrammingQuestion".to_string(),
-                language: "docker:cese4000-2022-rust".to_string(),
-                library_visible,
-                program_output_visible,
-                spec_test_details_visible,
-                docker_image: "".to_string(),
+                language: Some("docker:cese4000-2022-rust".to_string()),
+                library_visible: Some(library_visible),
+                program_output_visible: Some(program_output_visible),
+                spec_test_details_visible: Some(spec_test_details_visible),
+                docker_image: Some("".to_string()),
 
-                editor_language_id: "rust".to_string(),
-                editor_test_language_id: "rust".to_string(),
-                editor_library_language_id: "rust".to_string(),
+                editor_language_id: Some("rust".to_string()),
+                editor_test_language_id: Some("rust".to_string()),
+                editor_library_language_id: Some("rust".to_string()),
 
-                solution_file: "solution.rs".to_string(),
-                solution_template_file: "solution_template.rs".to_string(),
-                spec_test_file: "test.rs".to_string(),
-                user_test_template_file: "test_template.rs".to_string(),
-                library_file: "library.rs".to_string(),
+                solution_file: Some("solution.rs".to_string()),
+                solution_template_file: Some("solution_template.rs".to_string()),
+                spec_test_file: Some("test.rs".to_string()),
+                user_test_template_file: Some("test_template.rs".to_string()),
+                library_file: Some("library.rs".to_string()),
                 question_text_file: "question.md".to_string(),
 
                 title: title.to_string(),
+
+                ..Default::default()
+            }),
+            folder: None,
+        }
+    }
+
+    pub fn new_mc(
+        title: &str,
+        explanation: &str,
+        randomize: bool,
+        style: MCStyle,
+        options: &[MCOption],
+    ) -> Self {
+        Self {
+            question: Some(Question {
+                r#type: "MultipleChoiceQuestion".to_string(),
+                question_text_file: "question.md".to_string(),
+                explanation: Some(explanation.to_string()),
+
+                title: title.to_string(),
+                random_order: Some(randomize),
+
+                num_answers_expected: Some(match style {
+                    MCStyle::AllThatApply => 0,
+                    MCStyle::NumCorrect(i) => i,
+                }),
+
+                alternatives: options
+                    .iter()
+                    .map(|i| Alternative {
+                        text: i.text,
+                        correct: i.is_correct
+                    }).collect(),
+
+                ..Default::default()
+            }),
+            folder: None,
+        }
+    }
+
+    pub fn new_open(
+        title: &str,
+    ) -> Self {
+        Self {
+            question: Some(Question {
+                r#type: "EssayQuestion".to_string(),
+                question_text_file: "question.md".to_string(),
+                essay_answer_file: Some("answer.md".to_string()),
+
+                title: title.to_string(),
+
+                ..Default::default()
             }),
             folder: None,
         }
@@ -152,18 +276,20 @@ enum Command {
 #[derive(Clone, PartialEq, Eq, Subcommand)]
 enum GenerateType {
     Zip {
-        #[clap(default_value_t=String::from("output.zip"))]
+        #[clap(default_value_t = String::from("output.zip"))]
         output: String,
     },
     Folder {
-        #[clap(default_value_t=String::from("output"))]
+        #[clap(default_value_t = String::from("output"))]
         output: String,
     },
 }
 
 #[derive(Debug)]
 struct StringError(String);
+
 impl Error for StringError {}
+
 impl Display for StringError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
@@ -225,23 +351,54 @@ fn write_and_fmt<P: AsRef<Path>, S: ToString>(path: P, code: S) -> io::Result<()
     Ok(())
 }
 
+fn generate_folder_internal(
+    path: impl AsRef<Path>,
+    WeblabFolder { title, assignment_text, assignments }: &WeblabFolder,
+    inline: bool,
+) -> Result<(), Box<dyn Error>> {
+    let p = path.as_ref().to_path_buf().join(sanitize(title));
+
+    std::fs::create_dir_all(&p)?;
+
+    let mut f = File::create(p.join("assignment-data.json"))?;
+    let s = serde_json::to_string_pretty(&AssignmentData::new_folder(
+        title,
+        &assignments.iter().map(|i| i.title()).collect::<Vec<_>>(),
+        inline,
+        assignment_text,
+    ))?;
+    f.write_all(s.as_bytes())?;
+
+    if !assignment_text.is_empty() {
+        let mut description = File::create(p.join("assignment_description.md"))?;
+        description.write_all(assignment_text.as_bytes())?;
+    }
+
+    for i in *assignments {
+        recursive_generate_folder(&p, i)?
+    }
+
+    Ok(())
+}
+
+
 fn recursive_generate_folder(
     path: impl AsRef<Path>,
     assignment: &WeblabAssignment,
 ) -> Result<(), Box<dyn Error>> {
     match assignment {
         WeblabAssignment::Programming(ProgrammingAssignment {
-            title,
-            assignment_text,
-            mut library_visible,
-            spectest_stdout_visible: _,
-            test,
-            solution,
-            library,
-            test_template,
-            solution_template,
-            checklist: _,
-        }) => {
+                                          title,
+                                          assignment_text,
+                                          mut library_visible,
+                                          spectest_stdout_visible: _,
+                                          test,
+                                          solution,
+                                          library,
+                                          test_template,
+                                          solution_template,
+                                          checklist: _,
+                                      }) => {
             let p = &(*path.as_ref()).to_path_buf().join(&sanitize(title));
             std::fs::create_dir_all(&p)?;
 
@@ -270,27 +427,50 @@ fn recursive_generate_folder(
             ))?;
             f.write_all(s.as_bytes())?;
         }
-        WeblabAssignment::Open(_) => {}
-        WeblabAssignment::MultipleChoice(_) => {}
-        WeblabAssignment::Folder(WeblabFolder {
-            title,
-            assignments,
-            assignment_text: _,
-        }) => {
-            let p = path.as_ref().to_path_buf().join(sanitize(title));
-
+        WeblabAssignment::Open(OpenQuestion { title, assignment_text, expected_answer, .. }) => {
+            let p = &(*path.as_ref()).to_path_buf().join(&sanitize(title));
             std::fs::create_dir_all(&p)?;
 
+            let mut f = File::create(p.join("answer.md"))?;
+            f.write_all(expected_answer.as_bytes())?;
+
+            let mut f = File::create(p.join("question.md"))?;
+            f.write_all(assignment_text.as_bytes())?;
+
+
             let mut f = File::create(p.join("assignment-data.json"))?;
-            let s = serde_json::to_string_pretty(&AssignmentData::new_folder(
+            let s = serde_json::to_string_pretty(&AssignmentData::new_open(
                 title,
-                &assignments.iter().map(|i| i.title()).collect::<Vec<_>>(),
             ))?;
             f.write_all(s.as_bytes())?;
+        }
+        WeblabAssignment::MultipleChoice(MCQuestion { title, assignment_text, options, randomize, style }) => {
+            let p = &(*path.as_ref()).to_path_buf().join(&sanitize(title));
+            std::fs::create_dir_all(&p)?;
 
-            for i in *assignments {
-                recursive_generate_folder(&p, i)?
-            }
+            let mut f = File::create(p.join("question.md"))?;
+            f.write_all(assignment_text.as_bytes())?;
+
+
+            let mut f = File::create(p.join("assignment-data.json"))?;
+            let s = serde_json::to_string_pretty(&AssignmentData::new_mc(
+                title,
+                "",
+                *randomize,
+                *style,
+                *options,
+            ))?;
+            f.write_all(s.as_bytes())?;
+        }
+        WeblabAssignment::Folder(wf) => {
+            generate_folder_internal(path, wf, false)?;
+        }
+        WeblabAssignment::InlineQuestionList(InlineQuestionList { title, assignment_text, assignments }) => {
+            generate_folder_internal(path, &WeblabFolder {
+                title,
+                assignment_text,
+                assignments,
+            }, true)?;
         }
     }
 
@@ -311,26 +491,35 @@ fn generate_folder(
     Ok(())
 }
 
+fn check_folder(title: &str, assignments: &[WeblabAssignment]) -> Result<(), Box<dyn Error>> {
+    let mut titles = HashSet::new();
+
+    for i in assignments {
+        if titles.contains(i.title()) {
+            return Err(Box::new(StringError(format!("folder `{title}` contains multiple assignments with the name `{}`, which leads to ambiguity", i.title()))));
+        } else {
+            titles.insert(i.title());
+            check_assignment_tree(i)?;
+        }
+    }
+
+    Ok(())
+}
+
 fn check_assignment_tree(assignment: &WeblabAssignment) -> Result<(), Box<dyn Error>> {
     match assignment {
         WeblabAssignment::Programming(_) => {}
         WeblabAssignment::Open(_) => {}
         WeblabAssignment::MultipleChoice(_) => {}
         WeblabAssignment::Folder(WeblabFolder {
-            title,
-            assignments,
-            assignment_text: _,
-        }) => {
-            let mut titles = HashSet::new();
-
-            for i in *assignments {
-                if titles.contains(i.title()) {
-                    return Err(Box::new(StringError(format!("folder `{title}` contains multiple assignments with the name `{}`, which leads to ambiguity", i.title()))));
-                } else {
-                    titles.insert(i.title());
-                    check_assignment_tree(i)?;
-                }
-            }
+                                     title,
+                                     assignments,
+                                     assignment_text: _,
+                                 }) => {
+            check_folder(title, assignments)?;
+        }
+        WeblabAssignment::InlineQuestionList(InlineQuestionList { title, assignment_text: _, assignments }) => {
+            check_folder(title, assignments)?;
         }
     }
 

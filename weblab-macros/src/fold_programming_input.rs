@@ -291,7 +291,7 @@ impl Fold for FindAnnotated {
     }
 }
 
-enum Status {
+pub enum Status {
     Certain(ItemMod),
     Maybe(ItemMod),
     Unkown,

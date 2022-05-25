@@ -1,6 +1,7 @@
 use weblab::open_question;
 
 open_question! {
+    title: "example",
     question:
     /// Explain how you answered this question
     ///
@@ -8,8 +9,4 @@ open_question! {
 
     answer:
     /// while typing
-
-    checklist:
-    "something",
-    "something else",
 }
